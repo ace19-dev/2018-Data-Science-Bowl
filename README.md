@@ -49,3 +49,6 @@ gain access to unique data sets to develop algorithms that address a specific ch
 - April 9th, 2018 - Entry deadline. Team merger deadline.
 - April 11, 2018 - Stage one deadline and stage two data release. Your model must be finalized and uploaded to Kaggle by this deadline.
 - April 16, 2018 - Final submission deadline.
+
+## reference
+- [Generic U-Net Tensorflow implementation for image segmentation](https://github.com/jakeret/tf_unet)
