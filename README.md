@@ -12,14 +12,8 @@ the genetic code that programs each cell.
 shortening the 10 years it takes for each new drug to come to market. 
 - Teams will create a computer model that can identify a range of nuclei across varied conditions. 
 
-## Evaluation (editing)
-- This competition is evaluated on the mean average precision at different intersection over union (IoU) thresholds. 
-- at a threshold of 0.5, a predicted object is considered a "hit" if its intersection over union with a ground truth object is greater than 0.5.
-- A true positive is counted when a single predicted object matches a ground truth object with an IoU above the threshold. 
-- A false positive indicates a predicted object had no associated ground truth object.
-- A false negative indicates a ground truth object had no associated predicted object.
-- The average precision of a single image is then calculated as the mean of the above precision values at each IoU threshold.
-- Lastly, the score returned by the competition metric is the mean taken over the individual average precisions of each image in the test dataset.
+## Evaluation
+[https://www.kaggle.com/c/data-science-bowl-2018#evaluation](https://www.kaggle.com/c/data-science-bowl-2018#evaluation)
 
 ## Submission File
 - In order to reduce the submission file size, our metric uses run-length encoding on the pixel values. 
