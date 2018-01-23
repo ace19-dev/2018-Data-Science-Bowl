@@ -41,7 +41,7 @@ and organizations to take on the world’s challenges with data and technology.
 gain access to unique data sets to develop algorithms that address a specific challenge. 
 
 ## Timeline
-- April 9th, 2018 - Entry deadline. Team merger deadline.
+- April 9th, 2018 - Entry deadline and Team merger deadline.
 - April 11, 2018 - Stage one deadline and stage two data release. Your model must be finalized and uploaded to Kaggle by this deadline.
 - April 16, 2018 - Final submission deadline.
 
