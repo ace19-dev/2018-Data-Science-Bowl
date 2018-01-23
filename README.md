@@ -52,3 +52,6 @@ gain access to unique data sets to develop algorithms that address a specific ch
 
 ## reference
 - [Generic U-Net Tensorflow implementation for image segmentation](https://github.com/jakeret/tf_unet)
+- [U-Net Brain Tumor Segmentation in TensorFlow](https://github.com/zsdonghao/u-net-brain-tumor)
+- [A concise code for training and evaluating Unet using tensorflow+keras](https://github.com/zizhaozhang/unet-tensorflow-keras)
+- [Implementation of Segnet, FCN, UNet and other models in Keras](https://github.com/divamgupta/image-segmentation-keras)
