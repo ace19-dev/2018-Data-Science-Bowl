@@ -46,7 +46,6 @@ gain access to unique data sets to develop algorithms that address a specific ch
 - April 16, 2018 - Final submission deadline.
 
 ## reference
-- [Generic U-Net Tensorflow implementation for image segmentation](https://github.com/jakeret/tf_unet) - hong
-- [U-Net Brain Tumor Segmentation in TensorFlow](https://github.com/zsdonghao/u-net-brain-tumor) - sean
+- [Generic U-Net Tensorflow implementation for image segmentation](https://github.com/jakeret/tf_unet) - hong, sean
 - [A concise code for training and evaluating Unet using tensorflow+keras](https://github.com/zizhaozhang/unet-tensorflow-keras) -
 - [Implementation of Segnet, FCN, UNet and other models in Keras](https://github.com/divamgupta/image-segmentation-keras) -
