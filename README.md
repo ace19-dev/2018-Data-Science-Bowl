@@ -49,7 +49,7 @@ gain access to unique data sets to develop algorithms that address a specific ch
 - [Generic U-Net Tensorflow implementation for image segmentation](https://github.com/jakeret/tf_unet) - hong, sean
 - [A concise code for training and evaluating Unet using tensorflow+keras](https://github.com/zizhaozhang/unet-tensorflow-keras) -
 - [Implementation of Segnet, FCN, UNet and other models in Keras](https://github.com/divamgupta/image-segmentation-keras) -
-- https://spark-in.me/post/unet-adventures-part-one-getting-acquainted-with-unet
+- [0.32 LB Unet soruce code](http://github.com/kamalkraj/DATA-SCIENCE-BOWL-2018) -
 
 
 ## Idea
