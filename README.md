@@ -45,7 +45,12 @@ gain access to unique data sets to develop algorithms that address a specific ch
 - April 11, 2018 - Stage one deadline and stage two data release. Your model must be finalized and uploaded to Kaggle by this deadline.
 - April 16, 2018 - Final submission deadline.
 
-## reference
+## Reference
 - [Generic U-Net Tensorflow implementation for image segmentation](https://github.com/jakeret/tf_unet) - hong, sean
 - [A concise code for training and evaluating Unet using tensorflow+keras](https://github.com/zizhaozhang/unet-tensorflow-keras) -
 - [Implementation of Segnet, FCN, UNet and other models in Keras](https://github.com/divamgupta/image-segmentation-keras) -
+
+
+## Idea
+- Augumentation (by using elastice depormation)
+- modify hyper-parameter
