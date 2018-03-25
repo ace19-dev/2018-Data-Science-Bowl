@@ -26,8 +26,8 @@ from keras import backend as K
 import tensorflow as tf
 
 # Set some parameters
-IMG_WIDTH = 128
-IMG_HEIGHT = 128
+IMG_WIDTH = 256
+IMG_HEIGHT = 256
 IMG_CHANNELS = 3
 TRAIN_PATH = '../../dl_data/nuclei_dataset/stage1_train/'
 TEST_PATH = '../../dl_data/nuclei_dataset/stage1_test/'
@@ -46,6 +46,14 @@ X_train = np.zeros((len(train_ids), IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS), dtype=
 Y_train = np.zeros((len(train_ids), IMG_HEIGHT, IMG_WIDTH, 1), dtype=np.bool)
 print('Getting and resizing train images and masks ... ')
 sys.stdout.flush()
+
+if os.path.isfile("train.npz"):
+    print("Train file loaded from memory")
+    npz = np.load('train.npz')
+    X_train = npz['X']
+    Y_train = npz['Y']
+
+"""
 for n, id_ in tqdm(enumerate(train_ids), total=len(train_ids)):
     path = TRAIN_PATH + id_
     img = imread(path + '/images/' + id_ + '.png')[:,:,:IMG_CHANNELS]
@@ -58,6 +66,7 @@ for n, id_ in tqdm(enumerate(train_ids), total=len(train_ids)):
                                       preserve_range=True), axis=-1)
         mask = np.maximum(mask, mask_)
     Y_train[n] = mask
+"""
 
 # Get and resize test images
 X_test = np.zeros((len(test_ids), IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS), dtype=np.uint8)
@@ -156,9 +165,9 @@ model.compile(optimizer='adam', loss='binary_crossentropy', metrics=[mean_iou])
 model.summary()
 
 # Fit model
-earlystopper = EarlyStopping(patience=5, verbose=1)
+earlystopper = EarlyStopping(patience=10, verbose=1)
 checkpointer = ModelCheckpoint('model-dsbowl2018-1.h5', verbose=1, save_best_only=True)
-results = model.fit(X_train, Y_train, validation_split=0.1, batch_size=32, epochs=100,
+results = model.fit(X_train, Y_train, validation_split=0.15, batch_size=32, epochs=100,
                     callbacks=[earlystopper, checkpointer])
 
 
