@@ -54,3 +54,5 @@ gain access to unique data sets to develop algorithms that address a specific ch
 ## Idea
 - Augumentation (by using elastice depormation)
 - modify hyper-parameter
+- using ensemble
+- Change network to Dilated U-net 
