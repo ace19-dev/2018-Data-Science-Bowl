@@ -29,8 +29,8 @@ import tensorflow as tf
 IMG_WIDTH = 256
 IMG_HEIGHT = 256
 IMG_CHANNELS = 3
-TRAIN_PATH = '../../dl_data/nuclei_dataset/stage1_train/'
-TEST_PATH = '../../dl_data/nuclei_dataset/stage1_test/'
+TRAIN_PATH = '/home/acemc19/dl-data/nucleus_detection/stage1_train/'
+TEST_PATH = '/home/acemc19/dl-data/nucleus_detection/stage1_test/'
 
 warnings.filterwarnings('ignore', category=UserWarning, module='skimage')
 seed = 42
@@ -47,13 +47,13 @@ Y_train = np.zeros((len(train_ids), IMG_HEIGHT, IMG_WIDTH, 1), dtype=np.bool)
 print('Getting and resizing train images and masks ... ')
 sys.stdout.flush()
 
-if os.path.isfile("train.npz"):
-    print("Train file loaded from memory")
-    npz = np.load('train.npz')
-    X_train = npz['X']
-    Y_train = npz['Y']
+# if os.path.isfile("train.npz"):
+#     print("Train file loaded from memory")
+#     npz = np.load('train.npz')
+#     X_train = npz['X']
+#     Y_train = npz['Y']
 
-"""
+
 for n, id_ in tqdm(enumerate(train_ids), total=len(train_ids)):
     path = TRAIN_PATH + id_
     img = imread(path + '/images/' + id_ + '.png')[:,:,:IMG_CHANNELS]
@@ -66,7 +66,7 @@ for n, id_ in tqdm(enumerate(train_ids), total=len(train_ids)):
                                       preserve_range=True), axis=-1)
         mask = np.maximum(mask, mask_)
     Y_train[n] = mask
-"""
+
 
 # Get and resize test images
 X_test = np.zeros((len(test_ids), IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS), dtype=np.uint8)
