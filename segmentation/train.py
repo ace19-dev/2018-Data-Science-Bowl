@@ -29,16 +29,20 @@ import argparse
 import sys
 import time
 import os
-import pandas as pd
+
 import tensorflow as tf
+import numpy as np
 
 from six.moves import xrange
 
+import matplotlib.pyplot as plt
+
 from nets.unet import Unet
+from dataset.dataset_loader import DataLoader
 
 
-height = 640
-width = 960
+IMG_WIDTH = 256
+IMG_HEIGHT = 256
 
 
 def _IOU(y_pred, y_true):
@@ -104,19 +108,19 @@ def main(_):
     # We want to see all the logging messages for this tutorial.
     tf.logging.set_verbosity(tf.logging.INFO)
 
-    train = pd.read_csv("./data/train.csv")
-    n_train = train.shape[0]
-
-    test = pd.read_csv("./data/test.csv")
-    n_test = test.shape[0]
+    # train = pd.read_csv("./data/train.csv")
+    # n_train = train.shape[0]
+    #
+    # test = pd.read_csv("./data/test.csv")
+    # n_test = test.shape[0]
 
     current_time = time.strftime("%m/%d/%H/%M/%S")
     train_logdir = os.path.join(FLAGS.logdir, "train", current_time)
     test_logdir = os.path.join(FLAGS.logdir, "test", current_time)
 
     tf.reset_default_graph()
-    X = tf.placeholder(tf.float32, shape=[None, height, width, 3], name="X")
-    y = tf.placeholder(tf.float32, shape=[None, height, width, 1], name="y")
+    X = tf.placeholder(tf.float32, shape=[None, IMG_HEIGHT, IMG_WIDTH, 3], name="X")
+    y = tf.placeholder(tf.float32, shape=[None, IMG_HEIGHT, IMG_WIDTH, 1], name="y")
     mode = tf.placeholder(tf.bool, name="mode") # training or not
 
     pred = Unet(X, mode, FLAGS)
@@ -137,26 +141,14 @@ def main(_):
     # IOU_op = tf.Print(IOU_op, [IOU_op])
     tf.summary.scalar("IOU", IOU_op)
 
-    train_csv = tf.train.string_input_producer(['./data/train.csv'])
-    test_csv = tf.train.string_input_producer(['./data/test.csv'])
-    train_image, train_mask = get_image_mask(train_csv)
-    test_image, test_mask = get_image_mask(test_csv, augmentation=False)
-
-    X_batch_op, y_batch_op = tf.train.shuffle_batch(
-        [train_image, train_mask],
-        batch_size=FLAGS.batch_size,
-        capacity=FLAGS.batch_size * 5,
-        min_after_dequeue=FLAGS.batch_size * 2,
-        allow_smaller_final_batch=True)
-
-    X_test_op, y_test_op = tf.train.batch(
-        [test_image, test_mask],
-        batch_size=FLAGS.batch_size,
-        capacity=FLAGS.batch_size * 2,
-        allow_smaller_final_batch=True)
+    ############################
+    # Prepare data
+    ############################
+    loader = DataLoader(FLAGS.dataset_dir, FLAGS.batch_size)
+    iterator = loader.dataset.make_initializable_iterator()
+    next_batch = iterator.get_next()
 
     summary_op = tf.summary.merge_all()
-
 
     with tf.Session() as sess:
         train_summary_writer = tf.summary.FileWriter(train_logdir, sess.graph)
@@ -166,6 +158,14 @@ def main(_):
         sess.run(init)
 
         saver = tf.train.Saver()
+
+        # # Initialize `iterator` with training data.
+        # training_filenames = ["/var/data/file1.tfrecord", "/var/data/file2.tfrecord"]
+        # sess.run(iterator.initializer, feed_dict={filenames: training_filenames})
+        #
+        # # Initialize `iterator` with validation data.
+        # validation_filenames = ["/var/data/validation1.tfrecord", ...]
+        # sess.run(iterator.initializer, feed_dict={filenames: validation_filenames})
 
         start_epoch = 1
         if os.path.exists(FLAGS.ckpt_dir) and tf.train.checkpoint_exists(FLAGS.ckpt_dir):
@@ -181,12 +181,12 @@ def main(_):
             os.mkdir(FLAGS.ckpt_dir)
 
         try:
-            tr_batches_per_epoch = int(n_train / FLAGS.batch_size)
-            if n_train % FLAGS.batch_size > 0:
+            tr_batches_per_epoch = int(670 / FLAGS.batch_size)
+            if 670 % FLAGS.batch_size > 0:
                 tr_batches_per_epoch += 1
-            test_batches_per_epoch = int(n_test / FLAGS.batch_size)
-            if n_test % FLAGS.batch_size > 0:
-                test_batches_per_epoch += 1
+            # test_batches_per_epoch = int(n_test / FLAGS.batch_size)
+            # if n_test % FLAGS.batch_size > 0:
+            #     test_batches_per_epoch += 1
 
             coord = tf.train.Coordinator()
             threads = tf.train.start_queue_runners(coord=coord)
@@ -195,8 +195,9 @@ def main(_):
             for epoch in xrange(start_epoch, FLAGS.epochs + 1):
                 tf.logging.info('epoch #%d start: ', epoch)
 
+                sess.run(iterator.initializer)
                 for step in range(tr_batches_per_epoch):
-                    X_batch, y_batch = sess.run([X_batch_op, y_batch_op])
+                    X_batch, y_batch = sess.run(next_batch)
                     step_iou, step_summary, _ = sess.run(
                         [IOU_op, summary_op, train_op],
                         feed_dict={X: X_batch,
@@ -207,28 +208,28 @@ def main(_):
                     tf.logging.info('Epoch #%d, step #%d/%d, IOU %f' %
                                     (epoch, step, tr_batches_per_epoch, step_iou))
 
-                tf.logging.info('validation start >> ')
-                total_iou = 0
-                test_count = 0
-                # test_total_step = n_test/FLAGS.batch_size
-                for n in range(test_batches_per_epoch):
-                    X_test, y_test = sess.run([X_test_op, y_test_op])
-                    test_step_iou, test_step_summary = sess.run(
-                        [IOU_op, summary_op],
-                        feed_dict={X: X_test,
-                                   y: y_test,
-                                   mode: False})
-
-                    # total_iou += test_step_iou * X_test.shape[0]
-                    total_iou += test_step_iou
-                    test_count += 1
-
-                    test_summary_writer.add_summary(test_step_summary, epoch)
-
-
-                total_iou /= test_count
-                tf.logging.info('Step #%d/%d, IOU %.1f%%' %
-                                    (n, test_batches_per_epoch, total_iou * 100))
+                # tf.logging.info('validation start >> ')
+                # total_iou = 0
+                # test_count = 0
+                # # test_total_step = n_test/FLAGS.batch_size
+                # for n in range(test_batches_per_epoch):
+                #     X_test, y_test = sess.run([X_test_op, y_test_op])
+                #     test_step_iou, test_step_summary = sess.run(
+                #         [IOU_op, summary_op],
+                #         feed_dict={X: X_test,
+                #                    y: y_test,
+                #                    mode: False})
+                #
+                #     # total_iou += test_step_iou * X_test.shape[0]
+                #     total_iou += test_step_iou
+                #     test_count += 1
+                #
+                #     test_summary_writer.add_summary(test_step_summary, epoch)
+                #
+                #
+                # total_iou /= test_count
+                # tf.logging.info('Step #%d/%d, IOU %.1f%%' %
+                #                     (n, test_batches_per_epoch, total_iou * 100))
 
                 checkpoint_path = os.path.join(FLAGS.ckpt_dir, 'model.ckpt')
                 tf.logging.info('Saving to "%s-%d"', checkpoint_path, epoch)
@@ -244,19 +245,26 @@ def main(_):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--epochs',
-        default=2,
+        '--dataset_dir',
+        default='/home/ace19/dl-data/nucleus_detection/stage1_train_tfrecord/',
+        # default='/home/ace19/dl-data/nucleus_detection/stage1_test',
+        type=str,
+        help="Data directory")
+
+    parser.add_argument(
+        "--epochs",
+        default=3,
         type=int,
         help="Number of epochs")
 
     parser.add_argument(
-        '--batch-size',
+        '--batch_size',
         default=10,
         type=int,
         help="Batch size")
 
     parser.add_argument(
-        '--log_dir',
+        '--logdir',
         type=str,
         default="logdir",
         help="Tensorboard log directory")

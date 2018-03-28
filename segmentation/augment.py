@@ -4,8 +4,8 @@ import numpy as np
 import tensorflow as tf
 
 
-height = 640
-width = 960
+IMG_WIDTH = 256
+IMG_HEIGHT = 256
 
 
 def image_augmentation(image, mask):
@@ -35,44 +35,44 @@ def image_augmentation(image, mask):
     return image, mask
 
 
-def get_image_mask(queue, augmentation=True):
-    """Returns `image` and `mask`
-    Input pipeline:
-        Queue -> CSV -> FileRead -> Decode JPEG
-    (1) Queue contains a CSV filename
-    (2) Text Reader opens the CSV
-        CSV file contains two columns
-        ["path/to/image.jpg", "path/to/mask.jpg"]
-    (3) File Reader opens both files
-    (4) Decode JPEG to tensors
-    Notes:
-        height, width = 640, 960
-    Returns
-        image (3-D Tensor): (640, 960, 3)
-        mask (3-D Tensor): (640, 960, 1)
-    """
-    text_reader = tf.TextLineReader(skip_header_lines=1)
-    _, csv_content = text_reader.read(queue)
-
-    image_path, mask_path = tf.decode_csv(
-        csv_content, record_defaults=[[""], [""]])
-
-    image_file = tf.read_file(image_path)
-    mask_file = tf.read_file(mask_path)
-
-    image = tf.image.decode_jpeg(image_file, channels=3)
-    image.set_shape([height, width, 3])
-    image = tf.cast(image, tf.float32)
-
-    mask = tf.image.decode_jpeg(mask_file, channels=1)
-    mask.set_shape([height, width, 1])
-    mask = tf.cast(mask, tf.float32)
-    mask = mask / (tf.reduce_max(mask) + 1e-7)
-
-    if augmentation:
-        image, mask = image_augmentation(image, mask)
-
-    return image, mask
+# def get_image_mask(queue, augmentation=True):
+#     """Returns `image` and `mask`
+#     Input pipeline:
+#         Queue -> CSV -> FileRead -> Decode JPEG
+#     (1) Queue contains a CSV filename
+#     (2) Text Reader opens the CSV
+#         CSV file contains two columns
+#         ["path/to/image.jpg", "path/to/mask.jpg"]
+#     (3) File Reader opens both files
+#     (4) Decode JPEG to tensors
+#     Notes:
+#         height, width = 640, 960
+#     Returns
+#         image (3-D Tensor): (640, 960, 3)
+#         mask (3-D Tensor): (640, 960, 1)
+#     """
+#     text_reader = tf.TextLineReader(skip_header_lines=1)
+#     _, csv_content = text_reader.read(queue)
+#
+#     image_path, mask_path = tf.decode_csv(
+#         csv_content, record_defaults=[[""], [""]])
+#
+#     image_file = tf.read_file(image_path)
+#     mask_file = tf.read_file(mask_path)
+#
+#     image = tf.image.decode_jpeg(image_file, channels=3)
+#     image.set_shape([height, width, 3])
+#     image = tf.cast(image, tf.float32)
+#
+#     mask = tf.image.decode_jpeg(mask_file, channels=1)
+#     mask.set_shape([height, width, 1])
+#     mask = tf.cast(mask, tf.float32)
+#     mask = mask / (tf.reduce_max(mask) + 1e-7)
+#
+#     if augmentation:
+#         image, mask = image_augmentation(image, mask)
+#
+#     return image, mask
 
 
 def get_more_images(imgs):
