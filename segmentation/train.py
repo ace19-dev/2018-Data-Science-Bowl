@@ -38,7 +38,10 @@ from six.moves import xrange
 import matplotlib.pyplot as plt
 
 from nets.unet import Unet
-from dataset.dataset_loader import DataLoader
+# from dataset.dataset_loader import DataLoader
+
+from input_data import Data
+from input_data import DataLoader
 
 
 IMG_WIDTH = 256
@@ -144,6 +147,17 @@ def main(_):
     ############################
     # Prepare data
     ############################
+    raw = Data(FLAGS.data_dir, FLAGS.validation_percentage)
+    tr_data = DataLoader(raw.data_dir,
+                         raw.get_data('training'),
+                         FLAGS.batch_size)
+    val_data = DataLoader(raw.data_dir,
+                          raw.get_data('validation'),
+                          FLAGS.batch_size)
+
+
+
+
     loader = DataLoader(FLAGS.dataset_dir, FLAGS.batch_size)
     iterator = loader.dataset.make_initializable_iterator()
     next_batch = iterator.get_next()
@@ -245,21 +259,27 @@ def main(_):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--dataset_dir',
-        default='/home/ace19/dl-data/nucleus_detection/stage1_train_tfrecord/',
+        '--data_dir',
+        default='/home/acemc19/dl-data/nucleus_detection/stage1_train',
         # default='/home/ace19/dl-data/nucleus_detection/stage1_test',
         type=str,
         help="Data directory")
 
     parser.add_argument(
-        "--epochs",
-        default=3,
+        '--validation_percentage',
         type=int,
-        help="Number of epochs")
+        default=10,
+        help='What percentage of wavs to use as a validation set.')
+
+    parser.add_argument(
+        '--epochs',
+        type=str,
+        default='5',
+        help='Number of epochs')
 
     parser.add_argument(
         '--batch_size',
-        default=10,
+        default=32,
         type=int,
         help="Batch size")
 
