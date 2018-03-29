@@ -79,8 +79,11 @@ def _process_image(dataset_dir, filename):
     for mask_file in mask_images:
         _mask = imread(os.path.join(mask_path, mask_file))
         _mask = np.expand_dims(
-            resize(_mask, (IMG_HEIGHT, IMG_WIDTH), mode='constant',
-                                      preserve_range=True), axis=-1)
+            resize(_mask,
+                   (IMG_HEIGHT, IMG_WIDTH),
+                   mode='constant',
+                   preserve_range=True),
+            axis=-1)
         mask = np.maximum(mask, _mask)
 
     # imshow(np.squeeze(mask))

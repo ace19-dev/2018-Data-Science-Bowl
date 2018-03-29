@@ -53,6 +53,14 @@ gain access to unique data sets to develop algorithms that address a specific ch
 - https://github.com/preritj/segmentation
 
 
+## Quick Start
+- Firstly, you can make ground truth mask.
+  - python ground_truth_mask.py
+- Second
+  - python train.py
+
+
+
 ## Idea
 - check image and label file
 - Augumentation (by using elastice depormation -> flip, bright etc.) (ing)
