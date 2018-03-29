@@ -54,8 +54,9 @@ gain access to unique data sets to develop algorithms that address a specific ch
 
 
 ## Idea
-- Augumentation (by using elastice depormation) (ing)
-- modify hyper-parameter
-- using ensemble (hong) / 
-- Change network to Dilated U-net (sungil)
 - check image and label file
+- Augumentation (by using elastice depormation -> flip, bright etc.) (ing)
+- using ensemble (hong) / 
+- modify hyper-parameter
+- Change network to Dilated U-net (sungil)
+
