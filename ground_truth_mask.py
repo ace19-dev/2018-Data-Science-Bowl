@@ -1,10 +1,3 @@
-
-
-
-
-
-
-
 from __future__ import print_function
 
 import numpy as np
@@ -12,7 +5,6 @@ import tensorflow as tf
 
 import argparse
 import os
-import random
 import sys
 
 from PIL import Image
@@ -21,8 +13,6 @@ from skimage.transform import resize
 
 import matplotlib.pyplot as plt
 
-IMG_WIDTH = 256
-IMG_HEIGHT = 256
 
 def get_image_size(data):
     image_path = os.path.join(FLAGS.dataset_dir, data, 'images')
@@ -32,14 +22,10 @@ def get_image_size(data):
     return img.height, img.width
 
 
-
 def main(_):
 
     filelist = sorted(os.listdir(FLAGS.dataset_dir))
     for data in filelist:
-        # image_path = os.path.join(FLAGS.dataset_dir, data, 'images')
-        # image = os.listdir(image_path)
-        # img = Image.open(os.path.join(image_path, image[0]))
         height, width = get_image_size(data)
 
         mask_path = os.path.join(FLAGS.dataset_dir, data, 'masks')
@@ -50,7 +36,7 @@ def main(_):
             _mask = np.expand_dims(_mask, axis=-1)
             mask = np.maximum(mask, _mask)
 
-        gt_path = os.path.join(FLAGS.dataset_dir, data, 'gt_mask')
+        gt_path = os.path.join(FLAGS.ground_truth_dir, data, 'gt_mask')
         if not os.path.exists(gt_path):
             os.makedirs(gt_path)
 
@@ -72,14 +58,8 @@ if __name__ == '__main__':
         help="Data directory")
 
     parser.add_argument(
-        '--output_dir',
-        default='/home/ace19/dl-data/nucleus_detection/stage1_train',
-        type=str,
-        help="Output data directory")
-
-    parser.add_argument(
         '--ground_truth_dir',
-        default='/home/ace19/dl-data/nucleus_detection/stage1_train',
+        default='/home/acemc19/dl-data/nucleus_detection/stage1_train',
         type=str,
         help="ground_truth data directory")
 
