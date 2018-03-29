@@ -24,11 +24,11 @@ def absoluteFilePaths(directory):
 class DataLoader(object):
 
   def __init__(self, tfrecord_dir, batch_size, shuffle=True):
-    # create dataset, Creating a source
+    # create _dataset, Creating a source
     filenames = absoluteFilePaths(tfrecord_dir)
     dataset = tf.data.TFRecordDataset(filenames)
 
-    # shuffle the first `buffer_size` elements of the dataset
+    # shuffle the first `buffer_size` elements of the _dataset
     #  Make sure to call tf.data.Dataset.shuffle() before applying the heavy transformations
     # (like reading the images, processing them, batching...).
     if shuffle:
@@ -40,7 +40,7 @@ class DataLoader(object):
 
     dataset = dataset.prefetch(buffer_size = 10 * batch_size)
 
-    # create a new dataset with batches of images
+    # create a new _dataset with batches of images
     dataset = dataset.batch(batch_size)
 
     self.dataset = dataset

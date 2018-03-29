@@ -56,7 +56,7 @@ class Data(object):
 
 
   def get_size(self, mode):
-    """Calculates the number of samples in the dataset partition.
+    """Calculates the number of samples in the _dataset partition.
     Args:
       mode: Which partition, must be 'training', 'validation', or 'testing'.
     Returns:
@@ -81,7 +81,7 @@ class Data(object):
 
 class DataLoader(object):
   """
-  Wrapper class around the new Tensorflows dataset pipeline.
+  Wrapper class around the new Tensorflows _dataset pipeline.
 
   Handles loading, partitioning, and preparing training data.
   Requires Tensorflow >= version 1.12rc0
@@ -93,10 +93,10 @@ class DataLoader(object):
 
     images, labels = self._get_data(data_dir, data)
 
-    # create dataset, Creating a source
+    # create _dataset, Creating a source
     dataset = tf.data.Dataset.from_tensor_slices((images, labels))
 
-    # shuffle the first `buffer_size` elements of the dataset
+    # shuffle the first `buffer_size` elements of the _dataset
     #  Make sure to call tf.data.Dataset.shuffle() before applying the heavy transformations
     # (like reading the images, processing them, batching...).
     if shuffle:
@@ -108,7 +108,7 @@ class DataLoader(object):
 
     dataset = dataset.prefetch(buffer_size = 10 * batch_size)
 
-    # create a new dataset with batches of images
+    # create a new _dataset with batches of images
     dataset = dataset.batch(batch_size)
 
     self.dataset = dataset

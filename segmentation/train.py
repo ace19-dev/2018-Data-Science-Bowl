@@ -38,7 +38,7 @@ from six.moves import xrange
 import matplotlib.pyplot as plt
 
 from nets.unet import Unet
-# from dataset.dataset_loader import DataLoader
+# from _dataset.dataset_loader import DataLoader
 
 from input_data import Data
 from input_data import DataLoader

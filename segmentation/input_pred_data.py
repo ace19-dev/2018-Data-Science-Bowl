@@ -57,7 +57,7 @@ class Data(object):
 
 class DataLoader(object):
   """
-  Wrapper class around the new Tensorflows dataset pipeline.
+  Wrapper class around the new Tensorflows _dataset pipeline.
 
   Handles loading, partitioning, and preparing training data.
   Requires Tensorflow >= version 1.12rc0
@@ -71,7 +71,7 @@ class DataLoader(object):
 
     images_path, images_name = self._get_data(data)
 
-    # create dataset, Creating a source
+    # create _dataset, Creating a source
     dataset = tf.data.Dataset.from_tensor_slices((images_path, images_name))
 
     # distinguish between train/infer. when calling the parsing functions
@@ -80,7 +80,7 @@ class DataLoader(object):
 
     dataset = dataset.prefetch(buffer_size = 10 * batch_size)
 
-    # create a new dataset with batches of images
+    # create a new _dataset with batches of images
     dataset = dataset.batch(batch_size)
 
     self.dataset = dataset

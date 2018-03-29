@@ -148,7 +148,7 @@ def _get_output_filename(output_dir, name, idx):
 def main(_):
 
     if not tf.gfile.Exists(FLAGS.dataset_dir):
-        raise ValueError('You must supply the dataset directory with --dataset_dir')
+        raise ValueError('You must supply the _dataset directory with --dataset_dir')
 
     # Dataset filenames, and shuffling.
     # path = os.path.join(FLAGS.dataset_dir, DIRECTORY_ANNOTATIONS)
@@ -157,7 +157,7 @@ def main(_):
         random.seed(RANDOM_SEED)
         random.shuffle(filenames)
 
-    # Process dataset files.
+    # Process _dataset files.
     i = 0
     idx = 0
     while i < len(filenames):
@@ -176,7 +176,7 @@ def main(_):
                 j += 1
             idx += 1
 
-    print('\nFinished converting the nucleus detection dataset!')
+    print('\nFinished converting the nucleus detection _dataset!')
 
 
 if __name__ == '__main__':
