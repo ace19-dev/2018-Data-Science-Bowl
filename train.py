@@ -29,6 +29,7 @@ import argparse
 import sys
 import time
 import os
+import datetime
 
 import tensorflow as tf
 import numpy as np
@@ -144,6 +145,51 @@ def main(_):
     # IOU_op = tf.Print(IOU_op, [IOU_op])
     tf.summary.scalar("IOU", IOU_op)
 
+    sess = tf.Session()
+    sess.run(tf.global_variables_initializer())
+
+    summary_op = tf.summary.merge_all()
+    train_summary_writer = tf.summary.FileWriter(train_logdir, sess.graph)
+    test_summary_writer = tf.summary.FileWriter(test_logdir)
+
+    saver = tf.train.Saver()
+
+
+    # start_epoch = 1
+    # if os.path.exists(FLAGS.ckpt_dir) and tf.train.checkpoint_exists(FLAGS.ckpt_dir):
+    #     latest_check_point = tf.train.latest_checkpoint(FLAGS.ckpt_dir)
+    #     saver.restore(sess, latest_check_point)
+    #     tf.logging.info('Restore from checkpoint: %s ', latest_check_point)
+    #     start_epoch = get_start_epoch_number(latest_check_point)
+    # else:
+    #     try:
+    #         os.rmdir(FLAGS.ckpt_dir)
+    #     except FileNotFoundError:
+    #         pass
+    #     os.mkdir(FLAGS.ckpt_dir)
+
+    start_epoch = 1
+    epoch_from_ckpt = 0
+    if FLAGS.ckpt_dir:
+        saver.restore(sess, FLAGS.ckpt_dir)
+        tmp = FLAGS.ckpt_dir
+        tmp = tmp.split('-')
+        tmp.reverse()
+        epoch_from_ckpt = int(tmp[0])
+        start_epoch = epoch_from_ckpt + 1
+
+    if epoch_from_ckpt != FLAGS.epochs + 1:
+        tf.logging.info('Training from epoch: %d ', start_epoch)
+
+    # Saving as Protocol Buffer (pb)
+    tf.train.write_graph(sess.graph_def,
+                         FLAGS.train_dir,
+                         'unet.pbtxt',
+                         as_text=True)
+
+
+
+
     ############################
     # Prepare data
     ############################
@@ -155,105 +201,72 @@ def main(_):
                           raw.get_data('validation'),
                           FLAGS.batch_size)
 
-
-
-
-    loader = DataLoader(FLAGS.dataset_dir, FLAGS.batch_size)
-    iterator = loader.dataset.make_initializable_iterator()
+    iterator = tf.data.Iterator.from_structure(tr_data.dataset.output_types,
+                                               tr_data.dataset.output_shapes)
     next_batch = iterator.get_next()
 
-    summary_op = tf.summary.merge_all()
+    # Ops for initializing the two different iterators
+    tr_init_op = iterator.make_initializer(tr_data.dataset)
+    val_init_op = iterator.make_initializer(val_data.dataset)
 
-    with tf.Session() as sess:
-        train_summary_writer = tf.summary.FileWriter(train_logdir, sess.graph)
-        test_summary_writer = tf.summary.FileWriter(test_logdir)
+    tr_batches_per_epoch = int(tr_data.data_size / FLAGS.batch_size)
+    if tr_data.data_size % FLAGS.batch_size > 0:
+        tr_batches_per_epoch += 1
+    val_batches_per_epoch = int(val_data.data_size / FLAGS.batch_size)
+    if val_data.data_size % FLAGS.batch_size > 0:
+        val_batches_per_epoch += 1
 
-        init = tf.global_variables_initializer()
-        sess.run(init)
 
-        saver = tf.train.Saver()
 
-        # # Initialize `iterator` with training data.
-        # training_filenames = ["/var/data/file1.tfrecord", "/var/data/file2.tfrecord"]
-        # sess.run(iterator.initializer, feed_dict={filenames: training_filenames})
-        #
-        # # Initialize `iterator` with validation data.
-        # validation_filenames = ["/var/data/validation1.tfrecord", ...]
-        # sess.run(iterator.initializer, feed_dict={filenames: validation_filenames})
+    ############################
+    # Training
+    ############################
+    tf.logging.info('training start >> ')
+    for epoch in xrange(start_epoch, FLAGS.epochs + 1):
+        tf.logging.info('epoch #%d start: ', epoch)
 
-        start_epoch = 1
-        if os.path.exists(FLAGS.ckpt_dir) and tf.train.checkpoint_exists(FLAGS.ckpt_dir):
-            latest_check_point = tf.train.latest_checkpoint(FLAGS.ckpt_dir)
-            saver.restore(sess, latest_check_point)
-            tf.logging.info('Restore from checkpoint: %s ', latest_check_point)
-            start_epoch = get_start_epoch_number(latest_check_point)
-        else:
-            try:
-                os.rmdir(FLAGS.ckpt_dir)
-            except FileNotFoundError:
-                pass
-            os.mkdir(FLAGS.ckpt_dir)
+        sess.run(tr_init_op)
+        for step in range(tr_batches_per_epoch):
+            X_batch, y_batch = sess.run(next_batch)
+            step_iou, step_summary, _ = sess.run(
+                [IOU_op, summary_op, train_op],
+                feed_dict={X: X_batch,
+                           y: y_batch,
+                           mode: True})
 
-        try:
-            tr_batches_per_epoch = int(670 / FLAGS.batch_size)
-            if 670 % FLAGS.batch_size > 0:
-                tr_batches_per_epoch += 1
-            # test_batches_per_epoch = int(n_test / FLAGS.batch_size)
-            # if n_test % FLAGS.batch_size > 0:
-            #     test_batches_per_epoch += 1
+            train_summary_writer.add_summary(step_summary, step)
+            tf.logging.info('Epoch #%d, step #%d/%d, IOU %f' %
+                            (epoch, step, tr_batches_per_epoch, step_iou))
 
-            coord = tf.train.Coordinator()
-            threads = tf.train.start_queue_runners(coord=coord)
+        print("{} Start validation".format(datetime.datetime.now()))
+        total_iou = 0
+        test_count = 0
+        sess.run(val_init_op)
+        for n in range(val_batches_per_epoch):
+            X_test, y_test = sess.run(next_batch)
+            test_step_iou, test_step_summary = sess.run(
+                [IOU_op, summary_op],
+                feed_dict={X: X_test,
+                           y: y_test,
+                           mode: False})
 
-            tf.logging.info('training start >> ')
-            for epoch in xrange(start_epoch, FLAGS.epochs + 1):
-                tf.logging.info('epoch #%d start: ', epoch)
+            # total_iou += test_step_iou * X_test.shape[0]
+            total_iou += test_step_iou
+            test_count += 1
 
-                sess.run(iterator.initializer)
-                for step in range(tr_batches_per_epoch):
-                    X_batch, y_batch = sess.run(next_batch)
-                    step_iou, step_summary, _ = sess.run(
-                        [IOU_op, summary_op, train_op],
-                        feed_dict={X: X_batch,
-                                   y: y_batch,
-                                   mode: True})
+            test_summary_writer.add_summary(test_step_summary, epoch)
 
-                    train_summary_writer.add_summary(step_summary, step)
-                    tf.logging.info('Epoch #%d, step #%d/%d, IOU %f' %
-                                    (epoch, step, tr_batches_per_epoch, step_iou))
 
-                # tf.logging.info('validation start >> ')
-                # total_iou = 0
-                # test_count = 0
-                # # test_total_step = n_test/FLAGS.batch_size
-                # for n in range(test_batches_per_epoch):
-                #     X_test, y_test = sess.run([X_test_op, y_test_op])
-                #     test_step_iou, test_step_summary = sess.run(
-                #         [IOU_op, summary_op],
-                #         feed_dict={X: X_test,
-                #                    y: y_test,
-                #                    mode: False})
-                #
-                #     # total_iou += test_step_iou * X_test.shape[0]
-                #     total_iou += test_step_iou
-                #     test_count += 1
-                #
-                #     test_summary_writer.add_summary(test_step_summary, epoch)
-                #
-                #
-                # total_iou /= test_count
-                # tf.logging.info('Step #%d/%d, IOU %.1f%%' %
-                #                     (n, test_batches_per_epoch, total_iou * 100))
+        total_iou /= test_count
+        tf.logging.info('Step #%d/%d, IOU %.1f%%' %
+                            (n, val_batches_per_epoch, total_iou * 100))
 
-                checkpoint_path = os.path.join(FLAGS.ckpt_dir, 'model.ckpt')
-                tf.logging.info('Saving to "%s-%d"', checkpoint_path, epoch)
-                saver.save(sess, checkpoint_path, global_step=epoch)
+        checkpoint_path = os.path.join(FLAGS.ckpt_dir, 'model.ckpt')
+        tf.logging.info('Saving to "%s-%d"', checkpoint_path, epoch)
+        saver.save(sess, checkpoint_path, global_step=epoch)
 
-        finally:
-            coord.request_stop()
-            coord.join(threads)
-            checkpoint_path = os.path.join(FLAGS.ckpt_dir, 'model.ckpt')
-            saver.save(sess, checkpoint_path)
+    checkpoint_path = os.path.join(FLAGS.ckpt_dir, 'model.ckpt')
+    saver.save(sess, checkpoint_path)
 
 
 if __name__ == '__main__':
@@ -273,7 +286,7 @@ if __name__ == '__main__':
 
     parser.add_argument(
         '--epochs',
-        type=str,
+        type=int,
         default='5',
         help='Number of epochs')
 
@@ -290,6 +303,12 @@ if __name__ == '__main__':
         help="Tensorboard log directory")
 
     parser.add_argument(
+        '--train_dir',
+        type=str,
+        default=os.getcwd() + '/models',
+        help='Directory to write event logs and checkpoint.')
+
+    parser.add_argument(
         '--reg',
         type=float,
         default=0.1,
@@ -298,7 +317,8 @@ if __name__ == '__main__':
     parser.add_argument(
         '--ckpt_dir',
         type=str,
-        default="models",
+        # default=os.getcwd() + '/models/mobile.ckpt-50',
+        default='',
         help="Checkpoint directory")
 
     FLAGS, unparsed = parser.parse_known_args()

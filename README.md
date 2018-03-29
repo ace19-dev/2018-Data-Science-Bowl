@@ -55,7 +55,7 @@ gain access to unique data sets to develop algorithms that address a specific ch
 
 ## Quick Start
 - Firstly, you can make ground truth mask.
-  - python ground_truth_mask.py
+  - python make_ground_truth.py
 - Second
   - python train.py
 

@@ -24,6 +24,9 @@ from tensorflow.python.framework.ops import convert_to_tensor
 MAX_NUM_WAVS_PER_CLASS = 2**27 - 1  # ~134M
 RANDOM_SEED = 888
 
+HEIGHT = 256
+WIDTH = 256
+
 
 def which_set(filename, validation_percentage):
   """Determines which data partition the file should belong to.
@@ -80,12 +83,6 @@ class Data(object):
 
 
 class DataLoader(object):
-  """
-  Wrapper class around the new Tensorflows _dataset pipeline.
-
-  Handles loading, partitioning, and preparing training data.
-  Requires Tensorflow >= version 1.12rc0
-  """
 
   def __init__(self, data_dir, data, batch_size, shuffle=True):
 
@@ -115,37 +112,48 @@ class DataLoader(object):
 
 
   def _get_data(self, data_dir, data):
-    data_len = len(data)
-    # image_paths = np.zeros(sample_count, dtype="U200")
     image_paths = np.array(data)
     mask_paths = np.array(data)
-
 
     for idx, image_name in enumerate(image_paths):
         image_paths[idx] = \
             os.path.join(data_dir, image_name['image'], 'images', image_name['image']) + '.png'
-        _masks = os.listdir(os.path.join(data_dir, image_name['image'], 'masks'))
-        _mask = np.array([len(_masks)])
-        for m_idx, mask_name in enumerate(_masks):
-            _mask[m_idx] = \
-                os.path.join(data_dir, image_name['image'], 'masks') + '/' + mask_name
-            mask_paths[idx] = _mask
-
+        mask_paths[idx] = \
+          os.path.join(data_dir, image_name['image'], 'gt_mask', image_name['image']) + '.png'
 
     # convert lists to TF tensor
     image_paths = convert_to_tensor(image_paths, dtype=dtypes.string)
-    mask_paths = convert_to_tensor(mask_paths, dtype=dtypes.float64)
+    mask_paths = convert_to_tensor(mask_paths, dtype=dtypes.string)
 
     return image_paths, mask_paths
 
 
-  def _parse_function(self, filename, label):
-    image_string = tf.read_file(filename)
+  def _parse_function(self, image_file, label_file):
+    image_string = tf.read_file(image_file)
     image_decoded = tf.image.decode_png(image_string, channels=3)
     # image_decoded = tf.image.decode_jpeg(image_string, channels=3)
+
+    tf.image.resize_image_with_crop_or_pad(image_decoded, HEIGHT, WIDTH)
+
     # image = tf.cast(image_decoded, tf.float32)
     image = tf.image.convert_image_dtype(image_decoded, dtype=tf.float32)
+
     # Finally, rescale to [-1,1] instead of [0, 1)
     # image = tf.subtract(image, 0.5)
     # image = tf.multiply(image, 2.0)
+
+
+    label_string = tf.read_file(label_file)
+    label_decoded = tf.image.decode_png(label_string, channels=1)
+    # label_decoded = tf.image.decode_jpeg(label_string, channels=1)
+
+    tf.image.resize_image_with_crop_or_pad(image_decoded, HEIGHT, WIDTH)
+
+    # label = tf.cast(label_decoded, tf.float32)
+    label = tf.image.convert_image_dtype(label_decoded, dtype=tf.float32)
+
+    # Finally, rescale to [-1,1] instead of [0, 1)
+    # image = tf.subtract(image, 0.5)
+    # image = tf.multiply(image, 2.0)
+
     return image, label
