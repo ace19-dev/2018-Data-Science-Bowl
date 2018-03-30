@@ -53,13 +53,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--dataset_dir',
-        default='/home/acemc19/dl-data/nucleus_detection/stage1_train',
+        default='/home/ace19/dl-data/nucleus_detection/stage1_train',
         type=str,
         help="Data directory")
 
     parser.add_argument(
         '--ground_truth_dir',
-        default='/home/acemc19/dl-data/nucleus_detection/stage1_train',
+        default='/home/ace19/dl-data/nucleus_detection/stage1_train',
         type=str,
         help="ground_truth data directory")
 

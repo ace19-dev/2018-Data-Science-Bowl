@@ -112,16 +112,6 @@ def main(_):
     # We want to see all the logging messages for this tutorial.
     tf.logging.set_verbosity(tf.logging.INFO)
 
-    # train = pd.read_csv("./data/train.csv")
-    # n_train = train.shape[0]
-    #
-    # test = pd.read_csv("./data/test.csv")
-    # n_test = test.shape[0]
-
-    current_time = time.strftime("%m/%d/%H/%M/%S")
-    train_logdir = os.path.join(FLAGS.logdir, "train", current_time)
-    test_logdir = os.path.join(FLAGS.logdir, "test", current_time)
-
     tf.reset_default_graph()
     X = tf.placeholder(tf.float32, shape=[None, IMG_HEIGHT, IMG_WIDTH, 3], name="X")
     y = tf.placeholder(tf.float32, shape=[None, IMG_HEIGHT, IMG_WIDTH, 1], name="y")
@@ -137,36 +127,21 @@ def main(_):
     tf.summary.image("Predicted Mask", pred)
 
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-
     with tf.control_dependencies(update_ops):
         train_op = make_train_op(pred, y)
 
     IOU_op = _IOU(pred, y)
-    # IOU_op = tf.Print(IOU_op, [IOU_op])
+    # IOU_op = -_IOU(pred, y)
     tf.summary.scalar("IOU", IOU_op)
 
     sess = tf.Session()
     sess.run(tf.global_variables_initializer())
 
     summary_op = tf.summary.merge_all()
-    train_summary_writer = tf.summary.FileWriter(train_logdir, sess.graph)
-    test_summary_writer = tf.summary.FileWriter(test_logdir)
+    train_summary_writer = tf.summary.FileWriter(FLAGS.logdir + '/train', sess.graph)
+    val_summary_writer = tf.summary.FileWriter(FLAGS.logdir + '/validation')
 
     saver = tf.train.Saver()
-
-
-    # start_epoch = 1
-    # if os.path.exists(FLAGS.ckpt_dir) and tf.train.checkpoint_exists(FLAGS.ckpt_dir):
-    #     latest_check_point = tf.train.latest_checkpoint(FLAGS.ckpt_dir)
-    #     saver.restore(sess, latest_check_point)
-    #     tf.logging.info('Restore from checkpoint: %s ', latest_check_point)
-    #     start_epoch = get_start_epoch_number(latest_check_point)
-    # else:
-    #     try:
-    #         os.rmdir(FLAGS.ckpt_dir)
-    #     except FileNotFoundError:
-    #         pass
-    #     os.mkdir(FLAGS.ckpt_dir)
 
     start_epoch = 1
     epoch_from_ckpt = 0
@@ -186,8 +161,6 @@ def main(_):
                          FLAGS.train_dir,
                          'unet.pbtxt',
                          as_text=True)
-
-
 
 
     ############################
@@ -217,7 +190,6 @@ def main(_):
         val_batches_per_epoch += 1
 
 
-
     ############################
     # Training
     ############################
@@ -227,53 +199,46 @@ def main(_):
 
         sess.run(tr_init_op)
         for step in range(tr_batches_per_epoch):
-            X_batch, y_batch = sess.run(next_batch)
-            step_iou, step_summary, _ = sess.run(
-                [IOU_op, summary_op, train_op],
-                feed_dict={X: X_batch,
-                           y: y_batch,
-                           mode: True})
+            X_train, y_train = sess.run(next_batch)
+            train_summary, accuracy, _ = \
+                sess.run([summary_op, IOU_op, train_op],
+                         feed_dict={X: X_train, y: y_train, mode: True})
 
-            train_summary_writer.add_summary(step_summary, step)
-            tf.logging.info('Epoch #%d, step #%d/%d, IOU %f' %
-                            (epoch, step, tr_batches_per_epoch, step_iou))
+            train_summary_writer.add_summary(train_summary, step)
+            tf.logging.info('epoch #%d, step #%d/%d, accuracy(iou) %.1f%%' %
+                            (epoch, step, tr_batches_per_epoch, accuracy))
 
         print("{} Start validation".format(datetime.datetime.now()))
-        total_iou = 0
-        test_count = 0
+        total_val_accuracy = 0
+        val_count = 0
         sess.run(val_init_op)
         for n in range(val_batches_per_epoch):
-            X_test, y_test = sess.run(next_batch)
-            test_step_iou, test_step_summary = sess.run(
-                [IOU_op, summary_op],
-                feed_dict={X: X_test,
-                           y: y_test,
-                           mode: False})
+            X_val, y_val = sess.run(next_batch)
+            val_summary, val_accuracy = \
+                sess.run([summary_op, IOU_op],
+                         feed_dict={X: X_val, y: y_val, mode: False})
 
-            # total_iou += test_step_iou * X_test.shape[0]
-            total_iou += test_step_iou
-            test_count += 1
+            # total_val_accuracy += val_step_iou * X_val.shape[0]
+            total_val_accuracy += val_accuracy
+            val_count += 1
 
-            test_summary_writer.add_summary(test_step_summary, epoch)
+            val_summary_writer.add_summary(val_summary, epoch)
+            tf.logging.info('epoch #%d, step #%d/%d, accuracy(iou) %.1f%%' %
+                            (n, val_batches_per_epoch, total_val_accuracy * 100))
 
+        total_val_accuracy /= val_count
+        tf.logging.info('step %d: Validation accuracy = %.1f%% (N=%d)' %
+                        (epoch, total_val_accuracy * 100, raw.get_size('validation')))
 
-        total_iou /= test_count
-        tf.logging.info('Step #%d/%d, IOU %.1f%%' %
-                            (n, val_batches_per_epoch, total_iou * 100))
-
-        checkpoint_path = os.path.join(FLAGS.ckpt_dir, 'model.ckpt')
-        tf.logging.info('Saving to "%s-%d"', checkpoint_path, epoch)
-        saver.save(sess, checkpoint_path, global_step=epoch)
-
-    checkpoint_path = os.path.join(FLAGS.ckpt_dir, 'model.ckpt')
-    saver.save(sess, checkpoint_path)
+        tf.logging.info('Saving to "%s-%d"', FLAGS.train_dir, epoch)
+        saver.save(sess, FLAGS.train_dir, global_step=epoch)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--data_dir',
-        default='/home/acemc19/dl-data/nucleus_detection/stage1_train',
+        default='/home/ace19/dl-data/nucleus_detection/stage1_train',
         # default='/home/ace19/dl-data/nucleus_detection/stage1_test',
         type=str,
         help="Data directory")
@@ -287,7 +252,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--epochs',
         type=int,
-        default='5',
+        default=5,
         help='Number of epochs')
 
     parser.add_argument(
@@ -299,7 +264,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--logdir',
         type=str,
-        default="logdir",
+        default=os.getcwd() + '/models/retrain_logs',
         help="Tensorboard log directory")
 
     parser.add_argument(

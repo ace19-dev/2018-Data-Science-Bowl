@@ -5,10 +5,6 @@ from __future__ import print_function
 import hashlib
 import os.path
 import random
-import re
-import sys
-import tarfile
-import urllib
 
 import numpy as np
 from six.moves import xrange  # pylint: disable=redefined-builtin
@@ -131,27 +127,18 @@ class DataLoader(object):
   def _parse_function(self, image_file, label_file):
     image_string = tf.read_file(image_file)
     image_decoded = tf.image.decode_png(image_string, channels=3)
-    # image_decoded = tf.image.decode_jpeg(image_string, channels=3)
-
-    tf.image.resize_image_with_crop_or_pad(image_decoded, HEIGHT, WIDTH)
-
-    # image = tf.cast(image_decoded, tf.float32)
-    image = tf.image.convert_image_dtype(image_decoded, dtype=tf.float32)
-
+    image_resized = tf.image.resize_image_with_crop_or_pad(image_decoded, HEIGHT, WIDTH)
+    # image = tf.cast(image_resized, tf.float32)
+    image = tf.image.convert_image_dtype(image_resized, dtype=tf.float32)
     # Finally, rescale to [-1,1] instead of [0, 1)
     # image = tf.subtract(image, 0.5)
     # image = tf.multiply(image, 2.0)
 
-
     label_string = tf.read_file(label_file)
     label_decoded = tf.image.decode_png(label_string, channels=1)
-    # label_decoded = tf.image.decode_jpeg(label_string, channels=1)
-
-    tf.image.resize_image_with_crop_or_pad(image_decoded, HEIGHT, WIDTH)
-
-    # label = tf.cast(label_decoded, tf.float32)
-    label = tf.image.convert_image_dtype(label_decoded, dtype=tf.float32)
-
+    label_resized = tf.image.resize_image_with_crop_or_pad(label_decoded, HEIGHT, WIDTH)
+    # label = tf.cast(label_resized, tf.float32)
+    label = tf.image.convert_image_dtype(label_resized, dtype=tf.float32)
     # Finally, rescale to [-1,1] instead of [0, 1)
     # image = tf.subtract(image, 0.5)
     # image = tf.multiply(image, 2.0)
