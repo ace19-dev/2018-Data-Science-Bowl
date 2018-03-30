@@ -193,9 +193,9 @@ def main(_):
     ############################
     # Training
     ############################
-    tf.logging.info('training start >> ')
+    print("{} Training start ++++++++ ".format(datetime.datetime.now()))
     for epoch in xrange(start_epoch, FLAGS.epochs + 1):
-        tf.logging.info('epoch #%d start: ', epoch)
+        tf.logging.info('epoch #%d start >>> ', epoch)
 
         sess.run(tr_init_op)
         for step in range(tr_batches_per_epoch):
@@ -205,10 +205,10 @@ def main(_):
                          feed_dict={X: X_train, y: y_train, mode: True})
 
             train_summary_writer.add_summary(train_summary, step)
-            tf.logging.info('epoch #%d, step #%d/%d, accuracy(iou) %.1f%%' %
+            tf.logging.info('epoch #%d, step #%d/%d, accuracy(iou) %.5f%%' %
                             (epoch, step, tr_batches_per_epoch, accuracy))
 
-        print("{} Start validation".format(datetime.datetime.now()))
+        print("{} Validation start ++++++++ ".format(datetime.datetime.now()))
         total_val_accuracy = 0
         val_count = 0
         sess.run(val_init_op)
@@ -223,15 +223,16 @@ def main(_):
             val_count += 1
 
             val_summary_writer.add_summary(val_summary, epoch)
-            tf.logging.info('epoch #%d, step #%d/%d, accuracy(iou) %.1f%%' %
+            tf.logging.info('step #%d/%d, accuracy(iou) %.5f%%' %
                             (n, val_batches_per_epoch, total_val_accuracy * 100))
 
         total_val_accuracy /= val_count
         tf.logging.info('step %d: Validation accuracy = %.1f%% (N=%d)' %
                         (epoch, total_val_accuracy * 100, raw.get_size('validation')))
 
-        tf.logging.info('Saving to "%s-%d"', FLAGS.train_dir, epoch)
-        saver.save(sess, FLAGS.train_dir, global_step=epoch)
+        checkpoint_path = os.path.join(FLAGS.train_dir, 'unet.ckpt')
+        tf.logging.info('Saving to "%s-%d"', checkpoint_path, epoch)
+        saver.save(sess, checkpoint_path, global_step=epoch)
 
 
 if __name__ == '__main__':
@@ -252,12 +253,12 @@ if __name__ == '__main__':
     parser.add_argument(
         '--epochs',
         type=int,
-        default=5,
+        default=50,
         help='Number of epochs')
 
     parser.add_argument(
         '--batch_size',
-        default=32,
+        default=64,
         type=int,
         help="Batch size")
 
