@@ -27,7 +27,6 @@ Original Paper:
 """
 import argparse
 import sys
-import time
 import os
 import datetime
 
@@ -126,6 +125,7 @@ def main(_):
     tf.summary.histogram("Predicted Mask", pred)
     tf.summary.image("Predicted Mask", pred)
 
+    # Updates moving mean and moving variance for BatchNorm (train/inference)
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
     with tf.control_dependencies(update_ops):
         train_op = make_train_op(pred, y)
@@ -164,7 +164,7 @@ def main(_):
 
 
     ############################
-    # Prepare data
+    # Get data
     ############################
     raw = Data(FLAGS.data_dir, FLAGS.validation_percentage)
     tr_data = DataLoader(raw.data_dir,
@@ -233,6 +233,7 @@ def main(_):
         checkpoint_path = os.path.join(FLAGS.train_dir, 'unet.ckpt')
         tf.logging.info('Saving to "%s-%d"', checkpoint_path, epoch)
         saver.save(sess, checkpoint_path, global_step=epoch)
+
 
 
 if __name__ == '__main__':

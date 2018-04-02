@@ -111,11 +111,11 @@ class DataLoader(object):
     image_paths = np.array(data)
     mask_paths = np.array(data)
 
-    for idx, image_name in enumerate(image_paths):
+    for idx, image_path in enumerate(image_paths):
         image_paths[idx] = \
-            os.path.join(data_dir, image_name['image'], 'images', image_name['image']) + '.png'
+            os.path.join(data_dir, image_path['image'], 'images', image_path['image']) + '.png'
         mask_paths[idx] = \
-          os.path.join(data_dir, image_name['image'], 'gt_mask', image_name['image']) + '.png'
+          os.path.join(data_dir, image_path['image'], 'gt_mask', image_path['image']) + '.png'
 
     # convert lists to TF tensor
     image_paths = convert_to_tensor(image_paths, dtype=dtypes.string)

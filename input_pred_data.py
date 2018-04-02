@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Model definitions for simple speech recognition.
-"""
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -28,91 +26,94 @@ from tensorflow.python.platform import gfile
 from tensorflow.python.framework import dtypes
 from tensorflow.python.framework.ops import convert_to_tensor
 
-RANDOM_SEED = 59185
+
+RANDOM_SEED = 888
 
 
 class Data(object):
-  def __init__(self, prediction_data_dir):
-    self.prediction_data_dir = prediction_data_dir
-    self._prepare_data_index()
+    def __init__(self, data_dir):
+        self.data_dir = data_dir
+        self._prepare_data_index()
 
 
-  def get_data(self):
-    return self.data_index['prediction']
+    def get_data(self):
+        return self.data_index['prediction']
 
 
-  def get_size(self):
-    return len(self.data_index['prediction'])
+    def get_size(self):
+        return len(self.data_index['prediction'])
 
 
-  def _prepare_data_index(self):
-    random.seed(RANDOM_SEED)
+    def _prepare_data_index(self):
+        random.seed(RANDOM_SEED)
 
-    self.data_index = {'prediction': []}
-    # Look through all the subfolders to find audio samples
-    search_path = os.path.join(self.prediction_data_dir, '*')
-    for image_path in gfile.Glob(search_path):
-      self.data_index['prediction'].append({'file': image_path})
+        self.data_index = {'prediction': []}
+        # Look through all the subfolders to find audio samples
+        search_path = os.path.join(self.data_dir, '*')
+        for image_path in gfile.Glob(search_path):
+            self.data_index['prediction'].append({'image': image_path})
 
 
 class DataLoader(object):
-  """
-  Wrapper class around the new Tensorflows _dataset pipeline.
+    """
+    Wrapper class around the new Tensorflows _dataset pipeline.
 
-  Handles loading, partitioning, and preparing training data.
-  Requires Tensorflow >= version 1.12rc0
-  """
+    Handles loading, partitioning, and preparing training data.
+    Requires Tensorflow >= version 1.12rc0
+    """
 
-  def __init__(self, data, batch_size):
-    # if shuffle:
-    #   self._shuffle_data() # initial shuffling
+    def __init__(self, data_dir, data, batch_size):
+        # if shuffle:
+        #   self._shuffle_data() # initial shuffling
 
-    self.data_size = len(data)
+        self.data_size = len(data)
 
-    images_path, images_name = self._get_data(data)
+        images_path, images_name = self._get_data(data_dir, data)
 
-    # create _dataset, Creating a source
-    dataset = tf.data.Dataset.from_tensor_slices((images_path, images_name))
+        # create _dataset, Creating a source
+        dataset = tf.data.Dataset.from_tensor_slices((images_path, images_name))
 
-    # distinguish between train/infer. when calling the parsing functions
-    # transform to images, preprocess, repeat, batch...
-    dataset = dataset.map(self._parse_function, num_parallel_calls=8)
+        # distinguish between train/infer. when calling the parsing functions
+        # transform to images, preprocess, repeat, batch...
+        dataset = dataset.map(self._parse_function, num_parallel_calls=8)
 
-    dataset = dataset.prefetch(buffer_size = 10 * batch_size)
+        dataset = dataset.prefetch(buffer_size = 10 * batch_size)
 
-    # create a new _dataset with batches of images
-    dataset = dataset.batch(batch_size)
+        # create a new _dataset with batches of images
+        dataset = dataset.batch(batch_size)
 
-    self.dataset = dataset
-
-
-  def _get_data(self, data):
-    sample_count = len(data)
-    # Data will be populated and returned.
-    image_paths = np.zeros(sample_count, dtype="U200")
-    image_names = np.empty(sample_count, dtype="U50")
-
-    for index in range(sample_count):
-      sample = data[index]
-      image_paths[index] = sample['file']
-      image_names[index] = os.path.basename(sample['file'])
-
-    # convert lists to TF tensor
-    image_paths = convert_to_tensor(image_paths, dtype=dtypes.string)
-    image_names = convert_to_tensor(image_names, dtype=dtypes.string)
-
-    return image_paths, image_names
+        self.dataset = dataset
 
 
-  def _parse_function(self, image_path, image_name):
-    image_string = tf.read_file(image_path)
-    image_decoded = tf.image.decode_png(image_string, channels=3)
-    # image_decoded = tf.image.decode_jpeg(image_string, channels=3)
-    # image = tf.cast(image_decoded, tf.float32)
-    image = tf.image.convert_image_dtype(image_decoded, dtype=tf.float32)
-    # Finally, rescale to [-1,1] instead of [0, 1)
-    # image = tf.subtract(image, 0.5)
-    # image = tf.multiply(image, 2.0)
-    return image, image_name
+    def _get_data(self, data_dir, data):
+        # sample_count = len(data)
+        # # Data will be populated and returned.
+        # image_paths = np.zeros(sample_count, dtype="U200")
+        # image_names = np.empty(sample_count, dtype="U50")
+        image_paths = np.array(data)
+        image_names = np.array(data)
+
+        for idx, image_path in enumerate(image_paths):
+            image_paths[idx] = \
+                os.path.join(data_dir, image_path['image'], 'images', image_path['image']) + '.png'
+            image_names[idx] = image_path + '.png'
+
+        # convert lists to TF tensor
+        image_paths = convert_to_tensor(image_paths, dtype=dtypes.string)
+        image_names = convert_to_tensor(image_names, dtype=dtypes.string)
+
+        return image_paths, image_names
+
+
+    def _parse_function(self, image_path, image_name):
+        image_string = tf.read_file(image_path)
+        image_decoded = tf.image.decode_png(image_string, channels=3)
+        image_resized = tf.image.resize_image_with_crop_or_pad(image_decoded, HEIGHT, WIDTH)
+        # image = tf.cast(image_decoded, tf.float32)
+        image = tf.image.convert_image_dtype(image_decoded, dtype=tf.float32)
+        # Finally, rescale to [-1,1] instead of [0, 1)
+        # image = tf.subtract(image, 0.5)
+        # image = tf.multiply(image, 2.0)
+        return image, image_name
 
 
