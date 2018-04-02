@@ -22,15 +22,15 @@ sys.stdout.flush()
 
 for n, id_ in tqdm(enumerate(train_ids), total=len(train_ids)):
     path = TRAIN_PATH + id_
-    image = cv2.imread(path + '/images/' + id_ + '.png', -1)
-    image = cv2.cvtColor(image, cv2.COLOR_RGBA2GRAY)
-    # imshow(image)
+    image_ = cv2.imread(path + '/images/' + id_ + '.png')
+    # image_ = cv2.cvtColor(image_, cv2.COLOR_RGBA2GRAY)
+    # imshow(image_)
     # plt.show()
-    mask_ = cv2.imread(path + '/gt_mask/' + id_ + '.png', -1)
-
+    mask_ = cv2.imread(path + '/gt_mask/' + id_ + '.png')
     # imshow(mask_)
     # plt.show()
-    image = np.concatenate((image[..., None], mask_[..., None]), axis=2)
+
+    image = np.concatenate((image_, mask_), axis=2)
 
     alpha = image.shape[1] * 2
     sigma = image.shape[1] * 0.08
@@ -62,8 +62,13 @@ for n, id_ in tqdm(enumerate(train_ids), total=len(train_ids)):
     # im_t = map_coordinates(image, indices, order=1, mode='reflect').reshape(shape)
     # mask_t = map_coordinates(mask_, indices, order=1, mode='reflect').reshape(shape)
 
-    im_t = im_merge_t[...,0]
-    mask_t = im_merge_t[...,1]
+    im_t = im_merge_t[...,0:3]
+    # imshow(im_t)
+    # plt.show()
+    mask_t = im_merge_t[...,3:6]
+    mask_t = cv2.cvtColor(mask_t, cv2.COLOR_RGB2GRAY)
+    # imshow(mask_t)
+    # plt.show()
 
     new_id = 'elastic' + id_[7:]
     os.mkdir(TRAIN_PATH + new_id)
