@@ -1,6 +1,7 @@
 
 import tensorflow as tf
 
+L2_REG = 0.1
 
 def _conv_conv_pool(input_,
                    n_filters,
@@ -33,7 +34,7 @@ def _conv_conv_pool(input_,
                 (3, 3),
                 activation=None,
                 padding='same',
-                kernel_regularizer=tf.contrib.layers.l2_regularizer(flags.reg),
+                kernel_regularizer=tf.contrib.layers.l2_regularizer(L2_REG),
                 name="conv_{}".format(i + 1))
             net = tf.layers.batch_normalization(
                 net, training=training, name="bn_{}".format(i + 1))
@@ -82,7 +83,7 @@ def _upconv_2D(tensor, n_filter, flags, name):
         filters=n_filter,
         kernel_size=2,
         strides=2,
-        kernel_regularizer=tf.contrib.layers.l2_regularizer(flags.reg),
+        kernel_regularizer=tf.contrib.layers.l2_regularizer(L2_REG),
         name="upsample_{}".format(name))
 
 
