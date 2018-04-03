@@ -28,10 +28,10 @@ def rle_encoding(x):
     return run_lengths
 
 # TODO
-# def prob_to_rles(x, cutoff=0.5):
-    # lab_img = label(x > cutoff)
-    # for i in range(1, lab_img.max() + 1):
-    #     yield rle_encoding(lab_img == i)
+def prob_to_rles(x, cutoff=0.5):
+    lab_img = label(x > cutoff)
+    for i in range(1, lab_img.max() + 1):
+        yield rle_encoding(lab_img == i)
 
 
 def main(_):
@@ -42,7 +42,6 @@ def main(_):
     config = tf.ConfigProto(log_device_placement=False, gpu_options=gpu_options)
     sess = tf.InteractiveSession(config=config)
 
-    tf.reset_default_graph()
     X = tf.placeholder(tf.float32, shape=[None, IMG_HEIGHT, IMG_WIDTH, 3], name="X")
     mode = tf.placeholder(tf.bool, name="mode")  # training or not
 
@@ -71,9 +70,7 @@ def main(_):
     # Get data
     ############################
     raw = Data(FLAGS.data_dir)
-    test_data = DataLoader(raw.data_dir,
-                           raw.get_data('prediction'),
-                           FLAGS.batch_size)
+    test_data = DataLoader(raw.get_data(), FLAGS.batch_size)
 
     iterator = tf.data.Iterator.from_structure(test_data.dataset.output_types,
                                                test_data.dataset.output_shapes)
@@ -85,7 +82,6 @@ def main(_):
     test_batches_per_epoch = int(test_data.data_size / FLAGS.batch_size)
     if test_data.data_size % FLAGS.batch_size > 0:
         test_batches_per_epoch += 1
-
 
 
     ##################################################
@@ -106,7 +102,7 @@ def main(_):
                             mode: False,
                         })
         # TODO
-        # size = len(fnames)
+        size = len(fnames)
         # for n in xrange(0, size):
         #     submission[fnames[n].decode('UTF-8')] = id2name[pred[n]]
         #
@@ -119,18 +115,18 @@ def main(_):
 
 
     # TODO
-    # new_test_ids = []
-    # rles = []
-    # for n, id_ in enumerate(test_ids):
-    #     rle = list(prob_to_rles(preds_test_upsampled[n]))
-    #     rles.extend(rle)
-    #     new_test_ids.extend([id_] * len(rle))
-    #
-    # # Create submission DataFrame
-    # sub = pd.DataFrame()
-    # sub['ImageId'] = new_test_ids
-    # sub['EncodedPixels'] = pd.Series(rles).apply(lambda x: ' '.join(str(y) for y in x))
-    # sub.to_csv('sub-dsbowl2018-1.csv', index=False)
+    new_test_ids = []
+    rles = []
+    for n, id_ in enumerate(test_ids):
+        rle = list(prob_to_rles(preds_test_upsampled[n]))
+        rles.extend(rle)
+        new_test_ids.extend([id_] * len(rle))
+
+    # Create submission DataFrame
+    sub = pd.DataFrame()
+    sub['ImageId'] = new_test_ids
+    sub['EncodedPixels'] = pd.Series(rles).apply(lambda x: ' '.join(str(y) for y in x))
+    sub.to_csv('sub-dsbowl2018-1.csv', index=False)
 
 
 

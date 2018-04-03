@@ -29,6 +29,9 @@ from tensorflow.python.framework.ops import convert_to_tensor
 
 RANDOM_SEED = 888
 
+HEIGHT = 256
+WIDTH = 256
+
 
 class Data(object):
     def __init__(self, data_dir):
@@ -51,7 +54,8 @@ class Data(object):
         # Look through all the subfolders to find audio samples
         search_path = os.path.join(self.data_dir, '*')
         for image_path in gfile.Glob(search_path):
-            self.data_index['prediction'].append({'image': image_path})
+            img = os.path.join(image_path, 'images', os.path.basename(image_path)) + '.png'
+            self.data_index['prediction'].append({'image': img})
 
 
 class DataLoader(object):
@@ -62,13 +66,13 @@ class DataLoader(object):
     Requires Tensorflow >= version 1.12rc0
     """
 
-    def __init__(self, data_dir, data, batch_size):
+    def __init__(self, data, batch_size):
         # if shuffle:
         #   self._shuffle_data() # initial shuffling
 
         self.data_size = len(data)
 
-        images_path, images_name = self._get_data(data_dir, data)
+        images_path, images_name = self._get_data(data)
 
         # create _dataset, Creating a source
         dataset = tf.data.Dataset.from_tensor_slices((images_path, images_name))
@@ -85,7 +89,7 @@ class DataLoader(object):
         self.dataset = dataset
 
 
-    def _get_data(self, data_dir, data):
+    def _get_data(self, data):
         # sample_count = len(data)
         # # Data will be populated and returned.
         # image_paths = np.zeros(sample_count, dtype="U200")
@@ -94,9 +98,8 @@ class DataLoader(object):
         image_names = np.array(data)
 
         for idx, image_path in enumerate(image_paths):
-            image_paths[idx] = \
-                os.path.join(data_dir, image_path['image'], 'images', image_path['image']) + '.png'
-            image_names[idx] = image_path + '.png'
+            image_paths[idx] = image_path['image']
+            image_names[idx] = os.path.basename(image_path['image'])[:-4]
 
         # convert lists to TF tensor
         image_paths = convert_to_tensor(image_paths, dtype=dtypes.string)
@@ -110,7 +113,7 @@ class DataLoader(object):
         image_decoded = tf.image.decode_png(image_string, channels=3)
         image_resized = tf.image.resize_image_with_crop_or_pad(image_decoded, HEIGHT, WIDTH)
         # image = tf.cast(image_decoded, tf.float32)
-        image = tf.image.convert_image_dtype(image_decoded, dtype=tf.float32)
+        image = tf.image.convert_image_dtype(image_resized, dtype=tf.float32)
         # Finally, rescale to [-1,1] instead of [0, 1)
         # image = tf.subtract(image, 0.5)
         # image = tf.multiply(image, 2.0)

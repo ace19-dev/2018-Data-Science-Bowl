@@ -48,8 +48,8 @@ IMG_WIDTH = 256
 IMG_HEIGHT = 256
 
 
-def _IOU(y_pred, y_true):
-    """Returns a (approx) IOU score
+def IOU(y_pred, y_true):
+    """Returns a (approx) batch_norm_wrapper score
 
     intesection = y_pred.flatten() * y_true.flatten()
     Then, IOU = 2 * intersection / (y_pred.sum() + y_true.sum() + 1e-7) + 1e-7
@@ -91,7 +91,7 @@ def make_train_op(y_pred, y_true):
     Returns:
         train_op: minimize operation
     """
-    loss = -_IOU(y_pred, y_true)
+    loss = -IOU(y_pred, y_true)
 
     global_step = tf.train.get_or_create_global_step()
 
@@ -130,8 +130,8 @@ def main(_):
     with tf.control_dependencies(update_ops):
         train_op = make_train_op(pred, y)
 
-    IOU_op = _IOU(pred, y)
-    # IOU_op = -_IOU(pred, y)
+    IOU_op = IOU(pred, y)
+    # IOU_op = -IOU(pred, y)
     tf.summary.scalar("IOU", IOU_op)
 
     sess = tf.Session()
@@ -254,7 +254,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--epochs',
         type=int,
-        default=50,
+        default=30,
         help='Number of epochs')
 
     parser.add_argument(
@@ -275,11 +275,11 @@ if __name__ == '__main__':
         default=os.getcwd() + '/models',
         help='Directory to write event logs and checkpoint.')
 
-    parser.add_argument(
-        '--reg',
-        type=float,
-        default=0.1,
-        help="L2 Regularizer Term")
+    # parser.add_argument(
+    #     '--reg',
+    #     type=float,
+    #     default=0.1,
+    #     help="L2 Regularizer Term")
 
     parser.add_argument(
         '--ckpt_dir',
