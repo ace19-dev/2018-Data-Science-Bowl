@@ -29,8 +29,8 @@ import tensorflow as tf
 IMG_WIDTH = 256
 IMG_HEIGHT = 256
 IMG_CHANNELS = 3
-TRAIN_PATH = '/home/ace19/dl-data/nucleus_detection/stage1_train/'
-TEST_PATH = '/home/ace19/dl-data/nucleus_detection/stage1_test/'
+TRAIN_PATH = '/home/acemc19/dl-data/nucleus_detection/stage1_train/'
+TEST_PATH = '/home/acemc19/dl-data/nucleus_detection/stage1_test/'
 
 warnings.filterwarnings('ignore', category=UserWarning, module='skimage')
 seed = 42
@@ -217,7 +217,8 @@ def rle_encoding(x):
     run_lengths = []
     prev = -2
     for b in dots:
-        if (b>prev+1): run_lengths.extend((b + 1, 0))
+        if (b>prev+1):
+            run_lengths.extend((b + 1, 0))
         run_lengths[-1] += 1
         prev = b
     return run_lengths

@@ -63,13 +63,9 @@ class DataLoader(object):
     Wrapper class around the new Tensorflows _dataset pipeline.
 
     Handles loading, partitioning, and preparing training data.
-    Requires Tensorflow >= version 1.12rc0
     """
 
     def __init__(self, data, batch_size):
-        # if shuffle:
-        #   self._shuffle_data() # initial shuffling
-
         self.data_size = len(data)
 
         images_path, images_name = self._get_data(data)
@@ -90,10 +86,7 @@ class DataLoader(object):
 
 
     def _get_data(self, data):
-        # sample_count = len(data)
-        # # Data will be populated and returned.
-        # image_paths = np.zeros(sample_count, dtype="U200")
-        # image_names = np.empty(sample_count, dtype="U50")
+        # Data will be populated and returned.
         image_paths = np.array(data)
         image_names = np.array(data)
 

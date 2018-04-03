@@ -7,7 +7,8 @@ import csv
 from six.moves import xrange
 from skimage.transform import resize
 from skimage.morphology import label
-from scipy.ndimage.measurements import label
+# from scipy.ndimage.measurements import label
+import pandas as pd
 
 import numpy as np
 import tensorflow as tf
@@ -21,7 +22,6 @@ IMG_WIDTH = 256
 IMG_HEIGHT = 256
 
 
-
 def rle_encoding(x):
     dots = np.where(x.T.flatten() == 1)[0]
     run_lengths = []
@@ -32,7 +32,7 @@ def rle_encoding(x):
         prev = b
     return run_lengths
 
-# TODO
+
 def prob_to_rles(x, cutoff=0.5):
     lab_img = label(x > cutoff)
     for i in range(1, lab_img.max() + 1):
@@ -97,6 +97,9 @@ def main(_):
 
     submission = dict()
 
+    preds_upsampled = []
+    preds_name = []
+
     count = 0;
     # Initialize iterator with the test dataset
     sess.run(test_init_op)
@@ -107,56 +110,44 @@ def main(_):
                                   X: batch_xs,
                                   mode: False,
                               })
-        # TODO
+
         # Create list of upsampled test masks
-        preds_upsampled = []
         size = len(fnames)
         for n in xrange(0, size):
+            preds_name.append(fnames[n].decode('UTF-8'))
             preds_upsampled.append(
-                resize(
-                    np.squeeze(prediction[i]),
-                    (batch_xs[i].shape[0], batch_xs[i].shape[1]),
-                    mode='constant',
-                    preserve_range=True)
+                # resize(
+                    np.squeeze(prediction[n]),
+                    # (batch_xs[i].shape[0], batch_xs[i].shape[1]),
+                    # mode='constant',
+                    # preserve_range=True
+                # )
             )
-            # submission[fnames[n].decode('UTF-8')] = id2name[prediction[n]]
-        #
+
         count += size
-        print(count, ' completed')
+    print(count, ' completed')
 
     end_time = datetime.datetime.now()
-    print('{} Data, End prediction: {}'.format(test_data.data_size, end_time))
+    print('{} Data -> End prediction: {}'.format(test_data.data_size, end_time))
     print('prediction waste time: {}'.format(end_time - start_time))
 
-
-    # TODO
     new_test_ids = []
     rles = []
-    for n, id_ in enumerate(test_ids):
-        rle = list(prob_to_rles(preds_test_upsampled[n]))
+    size = len(preds_name)
+    for idx in range(size):
+        rle = list(prob_to_rles(preds_upsampled[idx]))
         rles.extend(rle)
-        new_test_ids.extend([id_] * len(rle))
+        new_test_ids.extend(preds_name[idx] * len(rle))
 
     # Create submission DataFrame
+    if not os.path.exists(FLAGS.result_dir):
+        os.makedirs(FLAGS.result_dir)
+
     sub = pd.DataFrame()
     sub['ImageId'] = new_test_ids
     sub['EncodedPixels'] = pd.Series(rles).apply(lambda x: ' '.join(str(y) for y in x))
-    sub.to_csv('sub-dsbowl2018-1.csv', index=False)
-
-    # # make submission.csv
-    # if not os.path.exists(FLAGS.result_dir):
-    #     os.makedirs(FLAGS.result_dir)
-    # fout = open(
-    #     os.path.join(FLAGS.result_dir,
-    #                  'submission-' + FLAGS.model_architecture + '-#' +
-    #                  global_step + '.csv'),
-    #     'w', encoding='utf-8', newline='')
-    # writer = csv.writer(fout)
-    # writer.writerow(['ImageId', 'EncodedPixels'])
-    # for key in sorted(submission.keys()):
-    #     writer.writerow([key, submission[key]])
-    # fout.close()
-
+    sub.to_csv(os.path.join(FLAGS.result_dir, 'submission-nucleus_det-' + global_step + '.csv'),
+               index=False)
 
 
 if __name__ == '__main__':
@@ -164,13 +155,13 @@ if __name__ == '__main__':
     parser.add_argument(
         '--data_dir',
         # default='/home/ace19/dl-data/nucleus_detection/stage1_train',
-        default='/home/ace19/dl-data/nucleus_detection/stage1_test',
+        default='/home/acemc19/dl-data/nucleus_detection/stage1_test',
         type=str,
         help="Data directory")
 
     parser.add_argument(
         '--batch_size',
-        default=64,
+        default=32,
         type=int,
         help="Batch size")
 
