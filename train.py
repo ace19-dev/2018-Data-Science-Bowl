@@ -113,7 +113,7 @@ def main(_):
 
     tf.reset_default_graph()
     X = tf.placeholder(tf.float32, shape=[None, IMG_HEIGHT, IMG_WIDTH, 3], name="X")
-    y = tf.placeholder(tf.float32, shape=[None, IMG_HEIGHT, IMG_WIDTH, 1], name="y")
+    GT = tf.placeholder(tf.float32, shape=[None, IMG_HEIGHT, IMG_WIDTH, 1], name="GT")
     mode = tf.placeholder(tf.bool, name="mode") # training or not
 
     pred = Unet(X, mode, FLAGS)
@@ -128,10 +128,10 @@ def main(_):
     # Updates moving mean and moving variance for BatchNorm (train/inference)
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
     with tf.control_dependencies(update_ops):
-        train_op = make_train_op(pred, y)
+        train_op = make_train_op(pred, GT)
 
-    IOU_op = IOU(pred, y)
-    # IOU_op = -IOU(pred, y)
+    IOU_op = IOU(pred, GT)
+    # IOU_op = -IOU(pred, GT)
     tf.summary.scalar("IOU", IOU_op)
 
     sess = tf.Session()
@@ -202,7 +202,7 @@ def main(_):
             X_train, y_train = sess.run(next_batch)
             train_summary, accuracy, _ = \
                 sess.run([summary_op, IOU_op, train_op],
-                         feed_dict={X: X_train, y: y_train, mode: True})
+                         feed_dict={X: X_train, GT: y_train, mode: True})
 
             train_summary_writer.add_summary(train_summary, step)
             tf.logging.info('epoch #%d, step #%d/%d, accuracy(iou) %.5f%%' %
@@ -216,7 +216,7 @@ def main(_):
             X_val, y_val = sess.run(next_batch)
             val_summary, val_accuracy = \
                 sess.run([summary_op, IOU_op],
-                         feed_dict={X: X_val, y: y_val, mode: False})
+                         feed_dict={X: X_val, GT: y_val, mode: False})
 
             # total_val_accuracy += val_step_iou * X_val.shape[0]
             total_val_accuracy += val_accuracy

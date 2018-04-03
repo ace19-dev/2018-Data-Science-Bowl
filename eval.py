@@ -4,6 +4,11 @@ import sys
 import datetime
 import csv
 
+from six.moves import xrange
+from skimage.transform import resize
+from skimage.morphology import label
+from scipy.ndimage.measurements import label
+
 import numpy as np
 import tensorflow as tf
 
@@ -36,7 +41,7 @@ def prob_to_rles(x, cutoff=0.5):
 
 def main(_):
     tf.logging.set_verbosity(tf.logging.INFO)
-    
+
     # TensorFlow session: grow memory when needed. TF, DO NOT USE ALL MY GPU MEMORY!!!
     gpu_options = tf.GPUOptions(allow_growth=True)
     config = tf.ConfigProto(log_device_placement=False, gpu_options=gpu_options)
@@ -92,22 +97,32 @@ def main(_):
 
     submission = dict()
 
+    count = 0;
     # Initialize iterator with the test dataset
     sess.run(test_init_op)
     for i in range(test_batches_per_epoch):
         batch_xs, fnames = sess.run(next_batch)
-        pred = sess.run(pred,
-                        feed_dict={
-                            X: batch_xs,
-                            mode: False,
-                        })
+        prediction = sess.run(pred,
+                              feed_dict={
+                                  X: batch_xs,
+                                  mode: False,
+                              })
         # TODO
+        # Create list of upsampled test masks
+        preds_upsampled = []
         size = len(fnames)
-        # for n in xrange(0, size):
-        #     submission[fnames[n].decode('UTF-8')] = id2name[pred[n]]
+        for n in xrange(0, size):
+            preds_upsampled.append(
+                resize(
+                    np.squeeze(prediction[i]),
+                    (batch_xs[i].shape[0], batch_xs[i].shape[1]),
+                    mode='constant',
+                    preserve_range=True)
+            )
+            # submission[fnames[n].decode('UTF-8')] = id2name[prediction[n]]
         #
-        # count += size
-        # print(count, ' completed')
+        count += size
+        print(count, ' completed')
 
     end_time = datetime.datetime.now()
     print('{} Data, End prediction: {}'.format(test_data.data_size, end_time))
@@ -127,6 +142,20 @@ def main(_):
     sub['ImageId'] = new_test_ids
     sub['EncodedPixels'] = pd.Series(rles).apply(lambda x: ' '.join(str(y) for y in x))
     sub.to_csv('sub-dsbowl2018-1.csv', index=False)
+
+    # # make submission.csv
+    # if not os.path.exists(FLAGS.result_dir):
+    #     os.makedirs(FLAGS.result_dir)
+    # fout = open(
+    #     os.path.join(FLAGS.result_dir,
+    #                  'submission-' + FLAGS.model_architecture + '-#' +
+    #                  global_step + '.csv'),
+    #     'w', encoding='utf-8', newline='')
+    # writer = csv.writer(fout)
+    # writer.writerow(['ImageId', 'EncodedPixels'])
+    # for key in sorted(submission.keys()):
+    #     writer.writerow([key, submission[key]])
+    # fout.close()
 
 
 
