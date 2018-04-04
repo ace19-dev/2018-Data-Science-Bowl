@@ -40,7 +40,7 @@ import pandas as pd
 import numpy as np
 import tensorflow as tf
 
-from nets.unet import Unet
+from nets.unet import Unet, Unet2
 from utils.data_oper import read_test_data_properties, mask_to_rle, \
                                 trsf_proba_to_binary, rle_to_mask
 from input_pred_data import Data
@@ -77,8 +77,10 @@ def main(_):
 
     X = tf.placeholder(tf.float32, shape=[None, IMG_HEIGHT, IMG_WIDTH, 3], name="X")
     mode = tf.placeholder(tf.bool, name="mode")  # training or not
+    dropout_prob = tf.placeholder(tf.float32, name='dropout_prob')
 
-    pred = Unet(X, mode, FLAGS)
+    # pred = Unet(X, mode, FLAGS)
+    pred = Unet2(X, dropout_prob, FLAGS)
     # evaluation = tf.argmax(logits, 1)
 
     sess.run(tf.global_variables_initializer())
@@ -137,7 +139,8 @@ def main(_):
         prediction = sess.run(pred,
                               feed_dict={
                                   X: batch_xs,
-                                  mode: False,
+                                  # mode: False,
+                                  dropout_prob: 1.0
                               })
 
         test_pred_proba.extend(prediction)
@@ -198,7 +201,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--data_dir',
         # default='/home/ace19/dl-data/nucleus_detection/stage1_train',
-        default='/home/ace19/dl-data/nucleus_detection/stage1_test',
+        default='/home/acemc19/dl-data/nucleus_detection/stage1_test',
         type=str,
         help="Data directory")
 

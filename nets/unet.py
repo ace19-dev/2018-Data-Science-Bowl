@@ -1,6 +1,9 @@
 
 import tensorflow as tf
 
+from keras.layers import Input, merge, Conv2D, MaxPooling2D, UpSampling2D, Dropout, Cropping2D
+
+
 L2_REG = 0.1
 
 def _conv_conv_pool(input_,
@@ -137,182 +140,54 @@ def Unet(X, training, flags=None):
         padding='same')
 
 
+def Unet2(X, training, flags=None):
+    conv1 = Conv2D(64, 3, activation='relu', padding='same', kernel_initializer='he_normal')(X)
+    conv1 = Conv2D(64, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv1)
+    pool1 = MaxPooling2D(pool_size=(2, 2))(conv1)
 
+    conv2 = Conv2D(128, 3, activation='relu', padding='same', kernel_initializer='he_normal')(pool1)
+    conv2 = Conv2D(128, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv2)
+    pool2 = MaxPooling2D(pool_size=(2, 2))(conv2)
 
-# def weight_variable(self, shape, name=None):
-#     """ Weight initialization """
-#     # initializer = tf.truncated_normal(shape, stddev=0.1)
-#     initializer = tf.contrib.layers.xavier_initializer()
-#     # initializer = tf.contrib.layers.variance_scaling_initializer()
-#     return tf.get_variable(name, shape=shape, initializer=initializer)
-#
-# def bias_variable(self, shape, name=None):
-#     """Bias initialization."""
-#     # initializer = tf.constant(0.1, shape=shape)
-#     initializer = tf.contrib.layers.xavier_initializer()
-#     # initializer = tf.contrib.layers.variance_scaling_initializer()
-#     return tf.get_variable(name, shape=shape, initializer=initializer)
-#
-# def conv2d(self, x, W, name=None):
-#     """ 2D convolution. """
-#     return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding='SAME', name=name)
-#
-# def max_pool_2x2(self, x, name=None):
-#     """ Max Pooling 2x2. """
-#     return tf.nn.max_pool(x, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME',
-#                           name=name)
-#
-# def conv2d_transpose(self, x, filters, name=None):
-#     """ Transposed 2d convolution. """
-#     return tf.layers.conv2d_transpose(x, filters=filters, kernel_size=2,
-#                                       strides=2, padding='SAME')
-#
-# def leaky_relu(self, z, name=None):
-#     """Leaky ReLU."""
-#     return tf.maximum(0.01 * z, z, name=name)
-#
-# def activation(self, x, name=None):
-#     """ Activation function. """
-#     a = tf.nn.elu(x, name=name)
-#     # a = self.leaky_relu(x, name=name)
-#     # a = tf.nn.relu(x, name=name)
-#     return a
-#
-# def batch_norm_layer(self, x, name=None):
-#     """Batch normalization layer."""
-#     if False:
-#         layer = tf.layers.batch_normalization(x, training=self.training_tf,
-#                                               momentum=0.9, name=name)
-#     else:
-#         layer = x
-#     return layer
-#
-# def dropout_layer(self, x, name=None):
-#     """Dropout layer."""
-#     if False:
-#         layer = tf.layers.dropout(x, self.dropout_proba, training=self.training_tf,
-#                                   name=name)
-#     else:
-#         layer = x
-#     return layer
-#
-# def Unet(X, training, flags=None):
-#     # 1. unit
-#     with tf.name_scope('1.unit'):
-#         W1_1 = weight_variable([3, 3, 3, 16], 'W1_1')
-#         b1_1 = bias_variable([16], 'b1_1')
-#         Z1 = conv2d(X, W1_1, 'Z1') + b1_1
-#         A1 = activation(batch_norm_layer(Z1))  # (.,128,128,16)
-#         A1_drop = dropout_layer(A1)
-#         W1_2 = weight_variable([3, 3, 16, 16], 'W1_2')
-#         b1_2 = bias_variable([16], 'b1_2')
-#         Z2 = conv2d(A1_drop, W1_2, 'Z2') + b1_2
-#         A2 = activation(batch_norm_layer(Z2))  # (.,128,128,16)
-#         P1 = max_pool_2x2(A2, 'P1')  # (.,64,64,16)
-#     # 2. unit
-#     with tf.name_scope('2.unit'):
-#         W2_1 = weight_variable([3, 3, 16, 32], "W2_1")
-#         b2_1 = bias_variable([32], 'b2_1')
-#         Z3 = conv2d(P1, W2_1) + b2_1
-#         A3 = activation(batch_norm_layer(Z3))  # (.,64,64,32)
-#         A3_drop = dropout_layer(A3)
-#         W2_2 = weight_variable([3, 3, 32, 32], "W2_2")
-#         b2_2 = bias_variable([32], 'b2_2')
-#         Z4 = conv2d(A3_drop, W2_2) + b2_2
-#         A4 = activation(batch_norm_layer(Z4))  # (.,64,64,32)
-#         P2 = max_pool_2x2(A4)  # (.,32,32,32)
-#     # 3. unit
-#     with tf.name_scope('3.unit'):
-#         W3_1 = weight_variable([3, 3, 32, 64], "W3_1")
-#         b3_1 = bias_variable([64], 'b3_1')
-#         Z5 = conv2d(P2, W3_1) + b3_1
-#         A5 = activation(batch_norm_layer(Z5))  # (.,32,32,64)
-#         A5_drop = dropout_layer(A5)
-#         W3_2 = weight_variable([3, 3, 64, 64], "W3_2")
-#         b3_2 = bias_variable([64], 'b3_2')
-#         Z6 = conv2d(A5_drop, W3_2) + b3_2
-#         A6 = activation(batch_norm_layer(Z6))  # (.,32,32,64)
-#         P3 = max_pool_2x2(A6)  # (.,16,16,64)
-#     # 4. unit
-#     with tf.name_scope('4.unit'):
-#         W4_1 = weight_variable([3, 3, 64, 128], "W4_1")
-#         b4_1 = bias_variable([128], 'b4_1')
-#         Z7 = conv2d(P3, W4_1) + b4_1
-#         A7 = activation(batch_norm_layer(Z7))  # (.,16,16,128)
-#         A7_drop = dropout_layer(A7)
-#         W4_2 = weight_variable([3, 3, 128, 128], "W4_2")
-#         b4_2 = bias_variable([128], 'b4_2')
-#         Z8 = conv2d(A7_drop, W4_2) + b4_2
-#         A8 = activation(batch_norm_layer(Z8))  # (.,16,16,128)
-#         P4 = max_pool_2x2(A8)  # (.,8,8,128)
-#     # 5. unit
-#     with tf.name_scope('5.unit'):
-#         W5_1 = weight_variable([3, 3, 128, 256], "W5_1")
-#         b5_1 = bias_variable([256], 'b5_1')
-#         Z9 = conv2d(P4, W5_1) + b5_1
-#         A9 = activation(batch_norm_layer(Z9))  # (.,8,8,256)
-#         A9_drop = dropout_layer(A9)
-#         W5_2 = weight_variable([3, 3, 256, 256], "W5_2")
-#         b5_2 = bias_variable([256], 'b5_2')
-#         Z10 = conv2d(A9_drop, W5_2) + b5_2
-#         A10 = activation(batch_norm_layer(Z10))  # (.,8,8,256)
-#     # 6. unit
-#     with tf.name_scope('6.unit'):
-#         W6_1 = weight_variable([3, 3, 256, 128], "W6_1")
-#         b6_1 = bias_variable([128], 'b6_1')
-#         U1 = conv2d_transpose(A10, 128)  # (.,16,16,128)
-#         U1 = tf.concat([U1, A8], 3)  # (.,16,16,256)
-#         Z11 = conv2d(U1, W6_1) + b6_1
-#         A11 = activation(batch_norm_layer(Z11))  # (.,16,16,128)
-#         A11_drop = dropout_layer(A11)
-#         W6_2 = weight_variable([3, 3, 128, 128], "W6_2")
-#         b6_2 = bias_variable([128], 'b6_2')
-#         Z12 = conv2d(A11_drop, W6_2) + b6_2
-#         A12 = activation(batch_norm_layer(Z12))  # (.,16,16,128)
-#     # 7. unit
-#     with tf.name_scope('7.unit'):
-#         W7_1 = weight_variable([3, 3, 128, 64], "W7_1")
-#         b7_1 = bias_variable([64], 'b7_1')
-#         U2 = conv2d_transpose(A12, 64)  # (.,32,32,64)
-#         U2 = tf.concat([U2, A6], 3)  # (.,32,32,128)
-#         Z13 = conv2d(U2, W7_1) + b7_1
-#         A13 = activation(batch_norm_layer(Z13))  # (.,32,32,64)
-#         A13_drop = dropout_layer(A13)
-#         W7_2 = weight_variable([3, 3, 64, 64], "W7_2")
-#         b7_2 = bias_variable([64], 'b7_2')
-#         Z14 = conv2d(A13_drop, W7_2) + b7_2
-#         A14 = activation(batch_norm_layer(Z14))  # (.,32,32,64)
-#     # 8. unit
-#     with tf.name_scope('8.unit'):
-#         W8_1 = weight_variable([3, 3, 64, 32], "W8_1")
-#         b8_1 = bias_variable([32], 'b8_1')
-#         U3 = conv2d_transpose(A14, 32)  # (.,64,64,32)
-#         U3 = tf.concat([U3, A4], 3)  # (.,64,64,64)
-#         Z15 = conv2d(U3, W8_1) + b8_1
-#         A15 = activation(batch_norm_layer(Z15))  # (.,64,64,32)
-#         A15_drop = dropout_layer(A15)
-#         W8_2 = weight_variable([3, 3, 32, 32], "W8_2")
-#         b8_2 = bias_variable([32], 'b8_2')
-#         Z16 = conv2d(A15_drop, W8_2) + b8_2
-#         A16 = activation(batch_norm_layer(Z16))  # (.,64,64,32)
-#     # 9. unit
-#     with tf.name_scope('9.unit'):
-#         W9_1 = weight_variable([3, 3, 32, 16], "W9_1")
-#         b9_1 = bias_variable([16], 'b9_1')
-#         U4 = conv2d_transpose(A16, 16)  # (.,128,128,16)
-#         U4 = tf.concat([U4, A2], 3)  # (.,128,128,32)
-#         Z17 = conv2d(U4, W9_1) + b9_1
-#         A17 = activation(batch_norm_layer(Z17))  # (.,128,128,16)
-#         A17_drop = dropout_layer(A17)
-#         W9_2 = weight_variable([3, 3, 16, 16], "W9_2")
-#         b9_2 = bias_variable([16], 'b9_2')
-#         Z18 = conv2d(A17_drop, W9_2) + b9_2
-#         A18 = activation(batch_norm_layer(Z18))  # (.,128,128,16)
-#     # 10. unit: output layer
-#     with tf.name_scope('10.unit'):
-#         W10 = weight_variable([1, 1, 16, 1], "W10")
-#         b10 = bias_variable([1], 'b10')
-#         Z19 = conv2d(A18, W10) + b10
-#         A19 = tf.nn.sigmoid(batch_norm_layer(Z19))  # (.,128,128,1)
-#
-#     return A19
+    conv3 = Conv2D(256, 3, activation='relu', padding='same', kernel_initializer='he_normal')(pool2)
+    conv3 = Conv2D(256, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv3)
+    pool3 = MaxPooling2D(pool_size=(2, 2))(conv3)
+
+    conv4 = Conv2D(512, 3, activation='relu', padding='same', kernel_initializer='he_normal')(pool3)
+    conv4 = Conv2D(512, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv4)
+    drop4 = Dropout(0.5)(conv4)
+    pool4 = MaxPooling2D(pool_size=(2, 2))(drop4)
+
+    conv5 = Conv2D(1024, 3, activation='relu', padding='same', kernel_initializer='he_normal')(pool4)
+    conv5 = Conv2D(1024, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv5)
+    drop5 = Dropout(0.5)(conv5)
+
+    up6 = Conv2D(512, 2, activation='relu', padding='same', kernel_initializer='he_normal')(
+        UpSampling2D(size=(2, 2))(drop5))
+    merge6 = merge([drop4, up6], mode='concat', concat_axis=3)
+    conv6 = Conv2D(512, 3, activation='relu', padding='same', kernel_initializer='he_normal')(merge6)
+    conv6 = Conv2D(512, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv6)
+
+    up7 = Conv2D(256, 2, activation='relu', padding='same', kernel_initializer='he_normal')(
+        UpSampling2D(size=(2, 2))(conv6))
+    merge7 = merge([conv3, up7], mode='concat', concat_axis=3)
+    conv7 = Conv2D(256, 3, activation='relu', padding='same', kernel_initializer='he_normal')(merge7)
+    conv7 = Conv2D(256, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv7)
+
+    up8 = Conv2D(128, 2, activation='relu', padding='same', kernel_initializer='he_normal')(
+        UpSampling2D(size=(2, 2))(conv7))
+    merge8 = merge([conv2, up8], mode='concat', concat_axis=3)
+    conv8 = Conv2D(128, 3, activation='relu', padding='same', kernel_initializer='he_normal')(merge8)
+    conv8 = Conv2D(128, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv8)
+
+    up9 = Conv2D(64, 2, activation='relu', padding='same', kernel_initializer='he_normal')(
+        UpSampling2D(size=(2, 2))(conv8))
+    merge9 = merge([conv1, up9], mode='concat', concat_axis=3)
+    conv9 = Conv2D(64, 3, activation='relu', padding='same', kernel_initializer='he_normal')(merge9)
+    conv9 = Conv2D(64, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv9)
+    conv9 = Conv2D(2, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv9)
+
+    conv10 = Conv2D(1, 1, activation='sigmoid')(conv9)
+
+    return conv10
+
