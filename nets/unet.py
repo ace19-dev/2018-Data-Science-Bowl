@@ -103,30 +103,34 @@ def Unet(X, training, flags=None):
         https://arxiv.org/abs/1505.04597
     """
     # net = X / 127.5 - 1
-    conv1, pool1 = _conv_conv_pool(X, [16, 16], training, flags, name=1)
-    conv2, pool2 = _conv_conv_pool(pool1, [32, 32], training, flags, name=2)
-    conv3, pool3 = _conv_conv_pool(pool2, [64, 64], training, flags, name=3)
-    conv4, pool4 = _conv_conv_pool(pool3, [128, 128], training, flags, name=4)
-    conv5, pool5 = _conv_conv_pool(pool4, [256, 256], training, flags, name=5)
-    conv6 = _conv_conv_pool(pool5, [512, 512], training, flags, name=6, pool=False)
+    conv1, pool1 = _conv_conv_pool(X, [8, 8], training, flags, name=1)
+    conv2, pool2 = _conv_conv_pool(pool1, [16, 16], training, flags, name=2)
+    conv3, pool3 = _conv_conv_pool(pool2, [32, 32], training, flags, name=3)
+    conv4, pool4 = _conv_conv_pool(pool3, [64, 64], training, flags, name=4)
+    conv5, pool5 = _conv_conv_pool(pool4, [128, 128], training, flags, name=5)
+    conv6, pool6 = _conv_conv_pool(pool5, [256, 256], training, flags, name=6)
+    conv7 = _conv_conv_pool(pool6, [512, 512], training, flags, name=7, pool=False)
 
-    up7 = _upconv_concat(conv6, conv5, 256, flags, name=7)
-    conv7 = _conv_conv_pool(up7, [256, 256], training, flags, name=7, pool=False)
+    up8 = _upconv_concat(conv7, conv6, 256, flags, name=8)
+    conv8 = _conv_conv_pool(up8, [256, 256], training, flags, name=8, pool=False)
 
-    up8 = _upconv_concat(conv7, conv4, 128, flags, name=8)
-    conv8 = _conv_conv_pool(up8, [128, 128], training, flags, name=8, pool=False)
+    up9 = _upconv_concat(conv8, conv5, 128, flags, name=9)
+    conv9 = _conv_conv_pool(up9, [128, 128], training, flags, name=9, pool=False)
 
-    up9 = _upconv_concat(conv8, conv3, 64, flags, name=9)
-    conv9 = _conv_conv_pool(up9, [64, 64], training, flags, name=9, pool=False)
+    up10 = _upconv_concat(conv9, conv4, 64, flags, name=10)
+    conv10 = _conv_conv_pool(up10, [64, 64], training, flags, name=10, pool=False)
 
-    up10 = _upconv_concat(conv9, conv2, 32, flags, name=10)
-    conv10 = _conv_conv_pool(up10, [32, 32], training, flags, name=10, pool=False)
+    up11 = _upconv_concat(conv10, conv3, 32, flags, name=11)
+    conv11 = _conv_conv_pool(up11, [32, 32], training, flags, name=11, pool=False)
 
-    up11 = _upconv_concat(conv10, conv1, 16, flags, name=11)
-    conv11 = _conv_conv_pool(up11, [16, 16], training, flags, name=11, pool=False)
+    up12 = _upconv_concat(conv11, conv2, 16, flags, name=12)
+    conv12 = _conv_conv_pool(up12, [16, 16], training, flags, name=12, pool=False)
+
+    up13 = _upconv_concat(conv12, conv1, 8, flags, name=13)
+    conv13 = _conv_conv_pool(up13, [8, 8], training, flags, name=13, pool=False)
 
     return tf.layers.conv2d(
-        conv11,
+        conv13,
         1, (1, 1),
         name='final',
         activation=tf.nn.sigmoid,
