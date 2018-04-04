@@ -77,10 +77,9 @@ def main(_):
 
     X = tf.placeholder(tf.float32, shape=[None, IMG_HEIGHT, IMG_WIDTH, 3], name="X")
     mode = tf.placeholder(tf.bool, name="mode")  # training or not
-    dropout_prob = tf.placeholder(tf.float32, name='dropout_prob')
 
     # pred = Unet(X, mode, FLAGS)
-    pred = Unet2(X, dropout_prob, FLAGS)
+    pred = Unet2(X, mode, FLAGS)
     # evaluation = tf.argmax(logits, 1)
 
     sess.run(tf.global_variables_initializer())
@@ -139,9 +138,8 @@ def main(_):
         prediction = sess.run(pred,
                               feed_dict={
                                   X: batch_xs,
-                                  # mode: False,
-                                  dropout_prob: 1.0
-                              })
+                                  mode: False}
+                              )
 
         test_pred_proba.extend(prediction)
         test_pred_fnames.extend(fnames)
