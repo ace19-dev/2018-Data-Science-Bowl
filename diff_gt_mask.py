@@ -7,20 +7,7 @@ import argparse
 import os
 import sys
 
-from PIL import Image
-from skimage.io import imread, imshow
-from skimage.transform import resize
-
-import matplotlib.pyplot as plt
-
-
-def get_image_size(data):
-    image_path = os.path.join(FLAGS.dataset_dir, data, 'images')
-    image = os.listdir(image_path)
-    img = Image.open(os.path.join(image_path, image[0]))
-
-    return img.height, img.width
-
+from skimage.io import imread
 
 def main(_):
     gt_mask_list = FLAGS.ground_truth_prefix.split(',')
@@ -31,7 +18,6 @@ def main(_):
     equal_count = 0
     filelist = sorted(os.listdir(FLAGS.dataset_dir))
     for file in filelist:
-        #height, width = get_image_size(data)
 
         # a mask
         a_mask_path = os.path.join(FLAGS.dataset_dir, file, gt_mask_list[0])
