@@ -151,47 +151,46 @@ def main(_):
     test_pred = trsf_proba_to_binary(test_pred_proba)
 
     # Resize predicted masks to original image size.
-    test_pred_original = []
+    original_size_test_pred = []
     for i in range(len(test_pred)):
-        res_mask = \
-            trsf_proba_to_binary(
-                resize(
-                    np.squeeze(test_pred[i]),
-                    (test_df.loc[i, 'img_height'], test_df.loc[i, 'img_width']),
-                    mode='constant',
-                    preserve_range=True))
-        test_pred_original.append(res_mask)
-    test_pred_original = np.array(test_pred_original)
+        res_mask = trsf_proba_to_binary(
+            resize(
+                np.squeeze(test_pred[i]),
+                (test_df.loc[i, 'img_height'], test_df.loc[i, 'img_width']),
+                mode='constant',
+                preserve_range=True)
+        )
+        original_size_test_pred.append(res_mask)
+    original_size_test_pred = np.array(original_size_test_pred)
 
-    # Inspect a test prediction and check run length encoding.
-    for n, id_ in enumerate(test_df['img_id']):
-        fname = test_pred_fnames[n]
-        mask = test_pred_original[n]
-        rle = list(mask_to_rle(mask))
-        mask_rec = rle_to_mask(rle, mask.shape)
-        print('no:{}, {} -> Run length encoding: {} matches, {} misses'.format(
-            n, fname, (mask_rec == mask).sum(), (mask_rec != mask).sum()))
-
-
-
-    # # Run length encoding of predicted test masks.
-    # test_pred_rle = []
-    # test_pred_ids = []
+    # # Inspect a test prediction and check run length encoding.
     # for n, id_ in enumerate(test_df['img_id']):
-    #     min_object_size = 20 * test_df.loc[n, 'img_height'] * test_df.loc[n, 'img_width'] / (256 * 256)
-    #     rle = list(mask_to_rle(test_pred_original[n], min_object_size=min_object_size))
-    #     test_pred_rle.extend(rle)
-    #     test_pred_ids.extend([id_] * len(rle))
-    #
-    # # Create submission DataFrame
-    # if not os.path.exists(FLAGS.result_dir):
-    #     os.makedirs(FLAGS.result_dir)
-    #
-    # sub = pd.DataFrame()
-    # sub['ImageId'] = test_pred_ids
-    # sub['EncodedPixels'] = pd.Series(test_pred_rle).apply(lambda x: ' '.join(str(y) for y in x))
-    # sub.to_csv(os.path.join(FLAGS.result_dir, 'submission-nucleus_det-' + global_step + '.csv'),
-    #            index=False)
+    #     fname = test_pred_fnames[n]
+    #     mask = original_size_test_pred[n]
+    #     rle = list(mask_to_rle(mask))
+    #     mask_rec = rle_to_mask(rle, mask.shape)
+    #     print('no:{}, {} -> Run length encoding: {} matches, {} misses'.format(
+    #         n, fname, (mask_rec == mask).sum(), (mask_rec != mask).sum()))
+
+    # Run length encoding of predicted test masks.
+    test_pred_rle = []
+    test_pred_ids = []
+    for n, _id in enumerate(test_df['img_id']):
+        min_object_size = 20 * test_df.loc[n, 'img_height'] * test_df.loc[n, 'img_width'] / (256 * 256)
+        rle = list(mask_to_rle(original_size_test_pred[n], min_object_size=min_object_size))
+        test_pred_rle.extend(rle)
+        test_pred_ids.extend([_id] * len(rle))
+
+    # Create submission DataFrame
+    if not os.path.exists(FLAGS.result_dir):
+        os.makedirs(FLAGS.result_dir)
+
+    sub = pd.DataFrame()
+    sub['ImageId'] = test_pred_ids
+    sub['EncodedPixels'] = pd.Series(test_pred_rle).apply(lambda x: ' '.join(str(y) for y in x))
+    sub.to_csv(os.path.join(FLAGS.result_dir, 'submission-nucleus_det-' + global_step + '.csv'),
+               index=False)
+    sub.head()
 
 
 if __name__ == '__main__':
