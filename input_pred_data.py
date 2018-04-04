@@ -29,8 +29,8 @@ from tensorflow.python.framework.ops import convert_to_tensor
 
 RANDOM_SEED = 888
 
-HEIGHT = 256
-WIDTH = 256
+HEIGHT = 512
+WIDTH = 512
 
 
 class Data(object):

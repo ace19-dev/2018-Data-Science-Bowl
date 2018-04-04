@@ -37,15 +37,17 @@ from six.moves import xrange
 
 import matplotlib.pyplot as plt
 
-from nets.unet import Unet
+from nets.unet import Unet, Unet2
 # from _dataset.dataset_loader import DataLoader
 
 from input_data import Data
 from input_data import DataLoader
 
 
-IMG_WIDTH = 256
-IMG_HEIGHT = 256
+# IMG_WIDTH = 256
+# IMG_HEIGHT = 256
+IMG_HEIGHT = 512
+IMG_WIDTH = 512
 
 
 def IOU(y_pred, y_true):
@@ -116,7 +118,8 @@ def main(_):
     GT = tf.placeholder(tf.float32, shape=[None, IMG_HEIGHT, IMG_WIDTH, 1], name="GT")
     mode = tf.placeholder(tf.bool, name="mode") # training or not
 
-    pred = Unet(X, mode, FLAGS)
+    # pred = Unet(X, mode, FLAGS)
+    pred = Unet2(X, mode, FLAGS)
 
     tf.add_to_collection("inputs", X)
     tf.add_to_collection("inputs", mode)
@@ -202,7 +205,10 @@ def main(_):
             X_train, y_train = sess.run(next_batch)
             train_summary, accuracy, _ = \
                 sess.run([summary_op, IOU_op, train_op],
-                         feed_dict={X: X_train, GT: y_train, mode: True})
+                         feed_dict={X: X_train,
+                                    GT: y_train,
+                                    mode: True}
+                         )
 
             train_summary_writer.add_summary(train_summary, step)
             tf.logging.info('epoch #%d, step #%d/%d, accuracy(iou) %.5f%%' %
@@ -216,7 +222,10 @@ def main(_):
             X_val, y_val = sess.run(next_batch)
             val_summary, val_accuracy = \
                 sess.run([summary_op, IOU_op],
-                         feed_dict={X: X_val, GT: y_val, mode: False})
+                         feed_dict={X: X_val,
+                                    GT: y_val,
+                                    mode: False}
+                         )
 
             # total_val_accuracy += val_step_iou * X_val.shape[0]
             total_val_accuracy += val_accuracy
@@ -240,7 +249,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--data_dir',
-        default='/home/ace19/dl-data/nucleus_detection/stage1_train',
+        default='/home/acemc19/dl-data/nucleus_detection/stage1_train',
         # default='/home/ace19/dl-data/nucleus_detection/stage1_test',
         type=str,
         help="Data directory")
@@ -259,7 +268,7 @@ if __name__ == '__main__':
 
     parser.add_argument(
         '--batch_size',
-        default=32,
+        default=16,
         type=int,
         help="Batch size")
 
