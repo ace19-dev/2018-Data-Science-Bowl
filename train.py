@@ -233,7 +233,7 @@ def main(_):
 
             val_summary_writer.add_summary(val_summary, epoch)
             tf.logging.info('step #%d/%d, accuracy(iou) %.5f%%' %
-                            (n, val_batches_per_epoch, total_val_accuracy * 100))
+                            (n, val_batches_per_epoch, val_accuracy * 100))
 
         total_val_accuracy /= val_count
         tf.logging.info('step %d: Validation accuracy = %.1f%% (N=%d)' %
