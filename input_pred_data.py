@@ -66,6 +66,8 @@ class DataLoader(object):
     """
 
     def __init__(self, data, batch_size):
+        self.data_info = {}
+
         self.data_size = len(data)
 
         images_path, images_name = self._get_data(data)

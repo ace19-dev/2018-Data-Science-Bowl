@@ -3,9 +3,39 @@ import numpy as np
 
 import tensorflow as tf
 
+from utils.data_oper import normalize_imgs, trsf_proba_to_binary, normalize_masks, \
+    imgs_to_grayscale, invert_imgs
+
+
 
 IMG_WIDTH = 256
 IMG_HEIGHT = 256
+
+
+# Normalize all images and masks. There is the possibility to transform images
+# into the grayscale sepctrum and to invert images which have a very
+# light background.
+def preprocess_raw_data(x_train, y_train, x_test, grayscale=False, invert=False):
+    """Preprocessing of images and masks."""
+    # Normalize images and masks
+    x_train = normalize_imgs(x_train)
+    y_train = trsf_proba_to_binary(normalize_masks(y_train))
+    x_test = normalize_imgs(x_test)
+    print('Images normalized.')
+
+    if grayscale:
+        # Remove color and transform images into grayscale spectrum.
+        x_train = imgs_to_grayscale(x_train)
+        x_test = imgs_to_grayscale(x_test)
+        print('Images transformed into grayscale spectrum.')
+
+    if invert:
+        # Invert images, such that each image has a dark background.
+        x_train = invert_imgs(x_train)
+        x_test = invert_imgs(x_test)
+        print('Images inverted to remove light backgrounds.')
+
+    return x_train, y_train, x_test
 
 
 def image_augmentation(image, mask):
