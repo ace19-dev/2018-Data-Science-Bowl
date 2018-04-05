@@ -40,14 +40,11 @@ import pandas as pd
 import numpy as np
 import tensorflow as tf
 
-from nets.unet import Unet_256
+from nets.unet import Unet_32_512
 from utils.data_oper import read_test_data_properties, mask_to_rle, \
                                 trsf_proba_to_binary, rle_to_mask
 from input_pred_data import Data
 from input_pred_data import DataLoader
-
-IMG_WIDTH = 256
-IMG_HEIGHT = 256
 
 
 def main(_):
@@ -58,10 +55,10 @@ def main(_):
     config = tf.ConfigProto(log_device_placement=False, gpu_options=gpu_options)
     sess = tf.InteractiveSession(config=config)
 
-    X = tf.placeholder(tf.float32, shape=[None, IMG_HEIGHT, IMG_WIDTH, 3], name="X")
+    X = tf.placeholder(tf.float32, shape=[None, FLAGS.img_size, FLAGS.img_size, 3], name="X")
     mode = tf.placeholder(tf.bool, name="mode")  # training or not
 
-    pred = Unet_256(X, mode, FLAGS)
+    pred = Unet_32_512(X, mode, FLAGS)
     # evaluation = tf.argmax(logits, 1)
 
     sess.run(tf.global_variables_initializer())
@@ -86,7 +83,7 @@ def main(_):
     # Get data
     ############################
     raw = Data(FLAGS.data_dir)
-    test_data = DataLoader(raw.get_data(), FLAGS.batch_size)
+    test_data = DataLoader(raw.get_data(), FLAGS.img_size, FLAGS.batch_size)
 
     iterator = tf.data.Iterator.from_structure(test_data.dataset.output_types,
                                                test_data.dataset.output_shapes)
@@ -122,7 +119,6 @@ def main(_):
                                   X: batch_xs,
                                   mode: False}
                               )
-
         test_pred_proba.extend(prediction)
         test_pred_fnames.extend(fnames)
 
@@ -132,6 +128,7 @@ def main(_):
 
     # Transform propabilities into binary values 0 or 1.
     test_pred = trsf_proba_to_binary(test_pred_proba)
+
 
     # Resize predicted masks to original image size.
     test_pred_to_original_size = []
@@ -145,6 +142,7 @@ def main(_):
 
     test_pred_to_original_size = np.array(test_pred_to_original_size)
 
+
     # # Inspect a test prediction and check run length encoding.
     # for n, id_ in enumerate(test_df['img_id']):
     #     fname = test_pred_fnames[n]
@@ -153,6 +151,7 @@ def main(_):
     #     mask_rec = rle_to_mask(rle, mask.shape)
     #     print('no:{}, {} -> Run length encoding: {} matches, {} misses'.format(
     #         n, fname, (mask_rec == mask).sum(), (mask_rec != mask).sum()))
+
 
     # Run length encoding of predicted test masks.
     test_pred_rle = []
@@ -201,6 +200,12 @@ if __name__ == '__main__':
         type=str,
         default=os.getcwd() + '/result',
         help='Directory to write submission.csv file.')
+
+    parser.add_argument(
+        '--img_size',
+        type=int,
+        default=256,
+        help="Image height and width")
 
     FLAGS, unparsed = parser.parse_known_args()
     tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)

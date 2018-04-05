@@ -65,12 +65,12 @@ class DataLoader(object):
     Handles loading, partitioning, and preparing training data.
     """
 
-    def __init__(self, data, batch_size):
+    def __init__(self, data, img_size, batch_size):
         self.data_info = {}
 
         self.data_size = len(data)
-
         images_path, images_name = self._get_data(data)
+        self.img_size = img_size
 
         # create _dataset, Creating a source
         dataset = tf.data.Dataset.from_tensor_slices((images_path, images_name))
@@ -107,7 +107,7 @@ class DataLoader(object):
         image_string = tf.read_file(image_path)
         image_decoded = tf.image.decode_png(image_string, channels=3)
         image_resized = tf.image.resize_images(image_decoded,
-                                               [HEIGHT, WIDTH],
+                                               [self.img_size, self.img_size],
                                                method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
         # image = tf.cast(image_decoded, tf.float32)
         image = tf.image.convert_image_dtype(image_resized, dtype=tf.float32)

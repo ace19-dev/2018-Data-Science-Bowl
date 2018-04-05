@@ -37,17 +37,11 @@ from six.moves import xrange
 
 import matplotlib.pyplot as plt
 
-from nets.unet import Unet_256, Unet_512
+from nets.unet import Unet_32_512, Unet_64_1024
 # from _dataset.dataset_loader import DataLoader
 
 from input_data import Data
 from input_data import DataLoader
-
-
-IMG_WIDTH = 256
-IMG_HEIGHT = 256
-# IMG_HEIGHT = 512
-# IMG_WIDTH = 512
 
 
 def IOU(y_pred, y_true):
@@ -114,12 +108,12 @@ def main(_):
     tf.logging.set_verbosity(tf.logging.INFO)
 
     tf.reset_default_graph()
-    X = tf.placeholder(tf.float32, shape=[None, IMG_HEIGHT, IMG_WIDTH, 3], name="X")
-    GT = tf.placeholder(tf.float32, shape=[None, IMG_HEIGHT, IMG_WIDTH, 1], name="GT")
+    X = tf.placeholder(tf.float32, shape=[None, FLAGS.img_size, FLAGS.img_size, 3], name="X")
+    GT = tf.placeholder(tf.float32, shape=[None, FLAGS.img_size, FLAGS.img_size, 1], name="GT")
     mode = tf.placeholder(tf.bool, name="mode") # training or not
 
     # pred = Unet(X, mode, FLAGS)
-    pred = Unet_256(X, mode, FLAGS)
+    pred = Unet_32_512(X, mode, FLAGS)
 
     tf.add_to_collection("inputs", X)
     tf.add_to_collection("inputs", mode)
@@ -172,9 +166,11 @@ def main(_):
     raw = Data(FLAGS.data_dir, FLAGS.validation_percentage)
     tr_data = DataLoader(raw.data_dir,
                          raw.get_data('training'),
+                         FLAGS.img_size,
                          FLAGS.batch_size)
     val_data = DataLoader(raw.data_dir,
                           raw.get_data('validation'),
+                          FLAGS.img_size,
                           FLAGS.batch_size)
 
     iterator = tf.data.Iterator.from_structure(tr_data.dataset.output_types,
@@ -263,7 +259,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--epochs',
         type=int,
-        default=30,
+        default=50,
         help='Number of epochs')
 
     parser.add_argument(
@@ -293,9 +289,15 @@ if __name__ == '__main__':
     parser.add_argument(
         '--ckpt_dir',
         type=str,
-        # default=os.getcwd() + '/models/unet.ckpt-40',
+        # default=os.getcwd() + '/models/unet.ckpt-30',
         default='',
         help="Checkpoint directory")
+
+    parser.add_argument(
+        '--img_size',
+        type=int,
+        default=256,
+        help="Image height and width")
 
     FLAGS, unparsed = parser.parse_known_args()
     tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)

@@ -6,9 +6,6 @@ import hashlib
 import os.path
 import random
 
-from skimage.transform import resize
-
-
 import numpy as np
 from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
@@ -22,11 +19,6 @@ from tensorflow.python.framework.ops import convert_to_tensor
 
 MAX_NUM_WAVS_PER_CLASS = 2**27 - 1  # ~134M
 RANDOM_SEED = 888
-
-HEIGHT = 256
-WIDTH = 256
-# HEIGHT = 512
-# WIDTH = 512
 
 
 def which_set(filename, validation_percentage):
@@ -85,11 +77,11 @@ class Data(object):
 
 class DataLoader(object):
 
-    def __init__(self, data_dir, data, batch_size, shuffle=True):
+    def __init__(self, data_dir, data, img_size, batch_size, shuffle=True):
 
         self.data_size = len(data)
-
         images, labels = self._get_data(data_dir, data)
+        self.img_size = img_size
 
         # create _dataset, Creating a source
         dataset = tf.data.Dataset.from_tensor_slices((images, labels))
@@ -133,7 +125,7 @@ class DataLoader(object):
         image_string = tf.read_file(image_file)
         image_decoded = tf.image.decode_png(image_string, channels=3)
         image_resized = tf.image.resize_images(image_decoded,
-                                               [HEIGHT, WIDTH],
+                                               [self.img_size, self.img_size],
                                                method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
         # image = tf.cast(image_resized, tf.float32)
         image = tf.image.convert_image_dtype(image_resized, dtype=tf.float32)
@@ -145,7 +137,7 @@ class DataLoader(object):
         label_string = tf.read_file(label_file)
         label_decoded = tf.image.decode_png(label_string, channels=1)
         label_resized = tf.image.resize_images(label_decoded,
-                                               [HEIGHT, WIDTH],
+                                               [self.img_size, self.img_size],
                                                method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
         # label = tf.cast(label_resized, tf.float32)
         label = tf.image.convert_image_dtype(label_resized, dtype=tf.float32)
