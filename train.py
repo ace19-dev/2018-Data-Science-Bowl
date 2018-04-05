@@ -37,17 +37,17 @@ from six.moves import xrange
 
 import matplotlib.pyplot as plt
 
-from nets.unet import Unet, Unet2
+from nets.unet import Unet_256, Unet_512
 # from _dataset.dataset_loader import DataLoader
 
 from input_data import Data
 from input_data import DataLoader
 
 
-# IMG_WIDTH = 256
-# IMG_HEIGHT = 256
-IMG_HEIGHT = 512
-IMG_WIDTH = 512
+IMG_WIDTH = 256
+IMG_HEIGHT = 256
+# IMG_HEIGHT = 512
+# IMG_WIDTH = 512
 
 
 def IOU(y_pred, y_true):
@@ -119,7 +119,7 @@ def main(_):
     mode = tf.placeholder(tf.bool, name="mode") # training or not
 
     # pred = Unet(X, mode, FLAGS)
-    pred = Unet2(X, mode, FLAGS)
+    pred = Unet_256(X, mode, FLAGS)
 
     tf.add_to_collection("inputs", X)
     tf.add_to_collection("inputs", mode)
@@ -236,7 +236,7 @@ def main(_):
                             (n, val_batches_per_epoch, val_accuracy * 100))
 
         total_val_accuracy /= val_count
-        tf.logging.info('step %d: Validation accuracy = %.1f%% (N=%d)' %
+        tf.logging.info('step %d: Validation accuracy = %.2f%% (N=%d)' %
                         (epoch, total_val_accuracy * 100, raw.get_size('validation')))
 
         checkpoint_path = os.path.join(FLAGS.train_dir, 'unet.ckpt')
@@ -263,7 +263,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--epochs',
         type=int,
-        default=50,
+        default=30,
         help='Number of epochs')
 
     parser.add_argument(

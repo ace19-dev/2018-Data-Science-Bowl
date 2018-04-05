@@ -108,13 +108,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--labels_path',
-        default='../../tmp/nucleus_detection/stage1_train_labels/stage1_train_labels.csv',
+        default='/home/acemc19/dev-repo/2018-Data-Science-Bowl/result/submission-nucleus_det-20.csv',
         type=str,
         help="Data directory")
 
     parser.add_argument(
         '--dataset_dir',
-        default='../../tmp/nucleus_detection/stage1_train',
+        default='/home/acemc19/dl-data/nucleus_detection/stage1_test',
         type=str,
         help="Labels directory")
 
