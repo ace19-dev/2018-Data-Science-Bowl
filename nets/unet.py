@@ -90,7 +90,7 @@ def _upconv_2D(tensor, n_filter, flags, name):
         name="upsample_{}".format(name))
 
 
-def Unet_512(X, training, flags=None):  # 512 x 512
+def Unet_64_1024(X, training, flags=None):  # 512 x 512
     """Build a U-Net architecture
 
     Args:
@@ -132,7 +132,7 @@ def Unet_512(X, training, flags=None):  # 512 x 512
         padding='same')
 
 
-def Unet_256(X, training, flags=None): # 256 x 256
+def Unet_32_512(X, training, flags=None): # 256 x 256
     """Build a U-Net architecture
 
     Args:
