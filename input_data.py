@@ -6,6 +6,9 @@ import hashlib
 import os.path
 import random
 
+from skimage.transform import resize
+
+
 import numpy as np
 from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
@@ -20,10 +23,10 @@ from tensorflow.python.framework.ops import convert_to_tensor
 MAX_NUM_WAVS_PER_CLASS = 2**27 - 1  # ~134M
 RANDOM_SEED = 888
 
-# HEIGHT = 256
-# WIDTH = 256
-HEIGHT = 512
-WIDTH = 512
+HEIGHT = 256
+WIDTH = 256
+# HEIGHT = 512
+# WIDTH = 512
 
 
 def which_set(filename, validation_percentage):
@@ -129,20 +132,25 @@ class DataLoader(object):
     def _parse_function(self, image_file, label_file):
         image_string = tf.read_file(image_file)
         image_decoded = tf.image.decode_png(image_string, channels=3)
-        image_resized = tf.image.resize_image_with_crop_or_pad(image_decoded, HEIGHT, WIDTH)
+        image_resized = tf.image.resize_images(image_decoded,
+                                               [HEIGHT, WIDTH],
+                                               method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
         # image = tf.cast(image_resized, tf.float32)
         image = tf.image.convert_image_dtype(image_resized, dtype=tf.float32)
         # Finally, rescale to [-1,1] instead of [0, 1)
         # image = tf.subtract(image, 0.5)
         # image = tf.multiply(image, 2.0)
 
+
         label_string = tf.read_file(label_file)
         label_decoded = tf.image.decode_png(label_string, channels=1)
-        label_resized = tf.image.resize_image_with_crop_or_pad(label_decoded, HEIGHT, WIDTH)
+        label_resized = tf.image.resize_images(label_decoded,
+                                               [HEIGHT, WIDTH],
+                                               method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
         # label = tf.cast(label_resized, tf.float32)
         label = tf.image.convert_image_dtype(label_resized, dtype=tf.float32)
         # Finally, rescale to [-1,1] instead of [0, 1)
-        # image = tf.subtract(image, 0.5)
-        # image = tf.multiply(image, 2.0)
+        # label = tf.subtract(label, 0.5)
+        # label = tf.multiply(label, 2.0)
 
         return image, label

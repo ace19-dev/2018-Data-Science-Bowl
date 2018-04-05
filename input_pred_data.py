@@ -29,8 +29,8 @@ from tensorflow.python.framework.ops import convert_to_tensor
 
 RANDOM_SEED = 888
 
-HEIGHT = 512
-WIDTH = 512
+HEIGHT = 256
+WIDTH = 256
 
 
 class Data(object):
@@ -106,12 +106,15 @@ class DataLoader(object):
     def _parse_function(self, image_path, image_name):
         image_string = tf.read_file(image_path)
         image_decoded = tf.image.decode_png(image_string, channels=3)
-        image_resized = tf.image.resize_image_with_crop_or_pad(image_decoded, HEIGHT, WIDTH)
+        image_resized = tf.image.resize_images(image_decoded,
+                                               [HEIGHT, WIDTH],
+                                               method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
         # image = tf.cast(image_decoded, tf.float32)
         image = tf.image.convert_image_dtype(image_resized, dtype=tf.float32)
         # Finally, rescale to [-1,1] instead of [0, 1)
         # image = tf.subtract(image, 0.5)
         # image = tf.multiply(image, 2.0)
+
         return image, image_name
 
 
