@@ -3,11 +3,10 @@ import os
 import sys
 import numpy as np
 import cv2
-import matplotlib.pyplot as plt
+import uuid
 
 from scipy.ndimage.interpolation import map_coordinates
 from scipy.ndimage.filters import gaussian_filter
-from skimage.io import imread, imshow
 from tqdm import tqdm
 
 
@@ -70,7 +69,9 @@ for n, id_ in tqdm(enumerate(train_ids), total=len(train_ids)):
     # imshow(mask_t)
     # plt.show()
 
-    new_id = 'elastic' + id_[7:]
+    randomString = str(uuid.uuid4()).replace("-", "")
+
+    new_id = 'elastic' + randomString + id_[39:]
     os.mkdir(TRAIN_PATH + new_id)
     os.mkdir(TRAIN_PATH + new_id + '/images/')
     os.mkdir(TRAIN_PATH + new_id + '/gt_mask/')
