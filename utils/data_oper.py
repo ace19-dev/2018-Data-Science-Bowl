@@ -4,7 +4,6 @@ import pandas as pd
 import cv2  # To read and manipulate images
 import numpy as np
 
-import keras.preprocessing.image as idg  # For using image generation
 from skimage.morphology import label  # For using image labeling
 import matplotlib.pyplot as plt  # Python 2D plotting library
 import matplotlib.cm as cm  # Color map
@@ -89,33 +88,6 @@ def imgs_to_grayscale(imgs):
     if imgs.shape[3] == 3:
         imgs = normalize_imgs(np.expand_dims(np.mean(imgs, axis=3), axis=3))
     return imgs
-
-
-def generate_images(imgs, seed=None):
-    """Generate new images."""
-    # Transformations.
-    image_generator = idg.ImageDataGenerator(rotation_range=90.,
-                                             width_shift_range=0.02,
-                                             height_shift_range=0.02,
-                                             zoom_range=0.10,
-                                             horizontal_flip=True,
-                                             vertical_flip=True)
-
-    # Generate new set of images
-    imgs = image_generator.flow(imgs,
-                                np.zeros(len(imgs)),
-                                batch_size=len(imgs),
-                                shuffle=False,
-                                seed=seed).next()
-    return imgs[0]
-
-
-def generate_images_and_masks(imgs, masks):
-    """Generate new images and masks."""
-    seed = np.random.randint(10000)
-    imgs = generate_images(imgs, seed=seed)
-    masks = trsf_proba_to_binary(generate_images(masks, seed=seed))
-    return imgs, masks
 
 
 # Analyze nuclei sizes.

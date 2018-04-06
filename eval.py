@@ -46,6 +46,8 @@ from utils.data_oper import read_test_data_properties, mask_to_rle, \
 from input_pred_data import Data
 from input_pred_data import DataLoader
 
+FLAGS = None
+
 
 def main(_):
     tf.logging.set_verbosity(tf.logging.INFO)

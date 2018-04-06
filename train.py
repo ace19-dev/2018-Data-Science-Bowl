@@ -43,6 +43,9 @@ from nets.unet import Unet_32_512, Unet_64_1024
 from input_data import Data
 from input_data import DataLoader
 
+FLAGS = None
+
+
 
 def IOU(y_pred, y_true):
     """Returns a (approx) batch_norm_wrapper score

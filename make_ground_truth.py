@@ -9,28 +9,28 @@ import sys
 
 from PIL import Image
 from skimage.io import imread, imshow
-from skimage.transform import resize
 
-import matplotlib.pyplot as plt
+from utils.image_utils import read_image
 
 
-def get_image_size(data):
-    image_path = os.path.join(FLAGS.dataset_dir, data, 'images')
-    image = os.listdir(image_path)
-    img = Image.open(os.path.join(image_path, image[0]))
-
-    return img.height, img.width
+# def get_image_size(data):
+#     image_path = os.path.join(FLAGS.dataset_dir, data, 'images')
+#     image = os.listdir(image_path)
+#     img = Image.open(os.path.join(image_path, image[0]))
+#
+#     return img.height, img.width
 
 
 def main(_):
 
     filelist = sorted(os.listdir(FLAGS.dataset_dir))
     for data in filelist:
-        height, width = get_image_size(data)
+        image_path = os.path.join(FLAGS.dataset_dir, data, 'images', data + '.png')
+        img_shape = read_image(image_path).shape
 
         mask_path = os.path.join(FLAGS.dataset_dir, data, 'masks')
         mask_images = sorted(os.listdir(mask_path))
-        mask = np.zeros((height, width, 1), dtype=np.bool)
+        mask = np.zeros((img_shape[0], img_shape[1], 1), dtype=np.bool)
         for mask_file in mask_images:
             _mask = imread(os.path.join(mask_path, mask_file))
             _mask = np.expand_dims(_mask, axis=-1)
@@ -53,13 +53,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--dataset_dir',
-        default='../../dl_data/nucleus_detection/stage1_train',
+        default='../../dl_data/nucleus/stage1_train',
         type=str,
         help="Data directory")
 
     parser.add_argument(
         '--ground_truth_dir',
-        default='../../dl_data/nucleus_detection/stage1_train',
+        default='../../dl_data/nucleus/stage1_train',
         type=str,
         help="ground_truth data directory")
 

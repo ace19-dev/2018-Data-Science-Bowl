@@ -13,7 +13,7 @@ def main(_):
     gt_mask_list = FLAGS.ground_truth_prefix.split(',')
     if len(gt_mask_list) != 2:
         raise Exception(
-            '--ground_truth_prefix must has 2 items (with split ,)')
+            '--mask dirs must has 2 items (with split ,)')
 
     equal_count = 0
     filelist = sorted(os.listdir(FLAGS.dataset_dir))
@@ -49,10 +49,10 @@ if __name__ == '__main__':
         help="Data directory")
 
     parser.add_argument(
-        '--ground_truth_prefix',
-        default='gt_mask_labels,gt_mask',
+        '--mask_dirs',
+        default='eval_mask,gt_mask',
         type=str,
-        help="ground_truth data prefix")
+        help="which mask dirs is used")
 
     FLAGS, unparsed = parser.parse_known_args()
     tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)

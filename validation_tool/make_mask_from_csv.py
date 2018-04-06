@@ -24,11 +24,11 @@ def get_image_size(imageId):
 
 
 def save_to_image(imageId, data):
-    gt_path = os.path.join(FLAGS.dataset_dir, imageId, FLAGS.ground_truth_prefix)
-    if not os.path.exists(gt_path):
-        os.makedirs(gt_path)
+    mask_path = os.path.join(FLAGS.dataset_dir, imageId, FLAGS.mask_dir)
+    if not os.path.exists(mask_path):
+        os.makedirs(mask_path)
 
-    target = os.path.join(gt_path, imageId + '.png')
+    target = os.path.join(mask_path, imageId + '.png')
 
     # Rescale to 0-255 and convert to uint8
     rescaled = (255.0 / data.max() * (data - data.min())).astype(np.uint8)
@@ -108,21 +108,21 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--labels_path',
-        default='/home/acemc19/dev-repo/2018-Data-Science-Bowl/result/submission-nucleus_det-20.csv',
+        default='../../../dev-repo/2018-Data-Science-Bowl/result/submission-nucleus_det-20.csv',
         type=str,
         help="Data directory")
 
     parser.add_argument(
         '--dataset_dir',
-        default='/home/acemc19/dl-data/nucleus_detection/stage1_test',
+        default='../../../dl_data/nucleus/stage1_test',
         type=str,
         help="Labels directory")
 
     parser.add_argument(
-        '--ground_truth_prefix',
-        default='gt_mask_labels',
+        '--mask_dir',
+        default='eval_mask',
         type=str,
-        help="ground_truth data prefix")
+        help="mask directory name")
 
     FLAGS, unparsed = parser.parse_known_args()
     tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
