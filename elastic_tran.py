@@ -10,8 +10,10 @@ from scipy.ndimage.filters import gaussian_filter
 from tqdm import tqdm
 
 
-TRAIN_PATH = '../../dl_data/nuclei_dataset/stage1_train/'
-TEST_PATH = '../../dl_data/nuclei_dataset/stage1_test/'
+TRAIN_PATH = '../../dl_data/nucleus/stage1_train/'
+
+new_id_prefix = '_elastic_'
+
 
 # Get train and test IDs
 train_ids = next(os.walk(TRAIN_PATH))[1]
@@ -71,7 +73,7 @@ for n, id_ in tqdm(enumerate(train_ids), total=len(train_ids)):
 
     randomString = str(uuid.uuid4()).replace("-", "")
 
-    new_id = 'elastic' + randomString + id_[39:]
+    new_id = new_id_prefix + randomString + id_[39:]
     os.mkdir(TRAIN_PATH + new_id)
     os.mkdir(TRAIN_PATH + new_id + '/images/')
     os.mkdir(TRAIN_PATH + new_id + '/gt_mask/')
