@@ -245,8 +245,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--data_dir',
-        default='/home/acemc19/dl-data/nucleus_detection/stage1_train',
-        # default='/home/ace19/dl-data/nucleus_detection/stage1_test',
+        default='../../dl_data/nucleus/stage1_train',
         type=str,
         help="Data directory")
 
@@ -289,8 +288,8 @@ if __name__ == '__main__':
     parser.add_argument(
         '--ckpt_dir',
         type=str,
-        # default=os.getcwd() + '/models/unet.ckpt-30',
-        default='',
+        default=os.getcwd() + '/models/unet.ckpt-30',
+        # default='',
         help="Checkpoint directory")
 
     parser.add_argument(

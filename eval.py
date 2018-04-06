@@ -179,7 +179,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--data_dir',
         # default='/home/ace19/dl-data/nucleus_detection/stage1_train',
-        default='/home/acemc19/dl-data/nucleus_detection/stage1_test',
+        default='../../dl_data/nucleus/stage1_test',
         type=str,
         help="Data directory")
 

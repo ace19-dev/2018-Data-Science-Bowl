@@ -7,6 +7,7 @@ import os.path
 import random
 
 import numpy as np
+from skimage import color, io
 from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
 
@@ -15,6 +16,10 @@ from tensorflow.python.util import compat
 
 from tensorflow.python.framework import dtypes
 from tensorflow.python.framework.ops import convert_to_tensor
+
+
+from utils.data_oper import trsf_proba_to_binary, \
+    imgs_to_grayscale, invert_imgs
 
 
 MAX_NUM_WAVS_PER_CLASS = 2**27 - 1  # ~134M
@@ -127,11 +132,11 @@ class DataLoader(object):
         image_resized = tf.image.resize_images(image_decoded,
                                                [self.img_size, self.img_size],
                                                method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
-        # image = tf.cast(image_resized, tf.float32)
         image = tf.image.convert_image_dtype(image_resized, dtype=tf.float32)
         # Finally, rescale to [-1,1] instead of [0, 1)
         # image = tf.subtract(image, 0.5)
         # image = tf.multiply(image, 2.0)
+        # image = tf.image.rgb_to_grayscale(image)
 
 
         label_string = tf.read_file(label_file)
@@ -139,7 +144,6 @@ class DataLoader(object):
         label_resized = tf.image.resize_images(label_decoded,
                                                [self.img_size, self.img_size],
                                                method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
-        # label = tf.cast(label_resized, tf.float32)
         label = tf.image.convert_image_dtype(label_resized, dtype=tf.float32)
         # Finally, rescale to [-1,1] instead of [0, 1)
         # label = tf.subtract(label, 0.5)

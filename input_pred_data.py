@@ -114,6 +114,7 @@ class DataLoader(object):
         # Finally, rescale to [-1,1] instead of [0, 1)
         # image = tf.subtract(image, 0.5)
         # image = tf.multiply(image, 2.0)
+        # image = tf.image.rgb_to_grayscale(image)
 
         return image, image_name
 

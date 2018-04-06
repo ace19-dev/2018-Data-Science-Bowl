@@ -78,6 +78,11 @@ def invert_imgs(imgs, cutoff=.5):
     imgs = np.array(list(map(lambda x: 1. - x if np.mean(x) > cutoff else x, imgs)))
     return normalize_imgs(imgs)
 
+def invert_img(img, cutoff=.5):
+    '''Invert image if mean value is greater than cutoff.'''
+    imgs = np.array(list(map(lambda x: 1. - x if np.mean(x) > cutoff else x, imgs)))
+    return normalize_imgs(imgs)
+
 
 def imgs_to_grayscale(imgs):
     '''Transform RGB images into grayscale spectrum.'''
