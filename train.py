@@ -45,7 +45,11 @@ from input_data import DataLoader
 
 FLAGS = None
 
+from utils.checkmate import BestCheckpointSaver
 
+# specify GPU
+os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
+os.environ["CUDA_VISIBLE_DEVICES"]="0"
 
 def IOU(y_pred, y_true):
     """Returns a (approx) batch_norm_wrapper score
@@ -92,12 +96,10 @@ def make_train_op(y_pred, y_true):
     """
     loss = -IOU(y_pred, y_true)
 
-    global_step = tf.train.get_or_create_global_step()
-
     # other optimizer will be used
     # optim = tf.train.AdamOptimizer()
     optim = tf.train.MomentumOptimizer(0.0001, 0.99)
-    return optim.minimize(loss, global_step=global_step)
+    return optim.minimize(loss)
 
 
 def get_start_epoch_number(latest_check_point):
@@ -134,6 +136,9 @@ def main(_):
     # IOU_op = -IOU(pred, GT)
     tf.summary.scalar("IOU", IOU_op)
 
+    global_step = tf.train.get_or_create_global_step()
+    increment_global_step = tf.assign(global_step, global_step + 1)
+
     sess = tf.Session()
     sess.run(tf.global_variables_initializer())
 
@@ -142,6 +147,9 @@ def main(_):
     val_summary_writer = tf.summary.FileWriter(FLAGS.logdir + '/validation')
 
     saver = tf.train.Saver()
+
+    # For, checkpoint saver
+    best_ckpt_saver = BestCheckpointSaver(title='unet.ckpt', save_dir=FLAGS.train_dir, num_to_keep=3, maximize=True)
 
     start_epoch = 1
     epoch_from_ckpt = 0
@@ -191,7 +199,6 @@ def main(_):
     if val_data.data_size % FLAGS.batch_size > 0:
         val_batches_per_epoch += 1
 
-
     ############################
     # Training
     ############################
@@ -202,8 +209,8 @@ def main(_):
         sess.run(tr_init_op)
         for step in range(tr_batches_per_epoch):
             X_train, y_train = sess.run(next_batch)
-            train_summary, accuracy, _ = \
-                sess.run([summary_op, IOU_op, train_op],
+            train_summary, accuracy, _, _ = \
+                sess.run([summary_op, IOU_op, train_op, increment_global_step],
                          feed_dict={X: X_train,
                                     GT: y_train,
                                     mode: True}
@@ -238,9 +245,11 @@ def main(_):
         tf.logging.info('step %d: Validation accuracy = %.2f%% (N=%d)' %
                         (epoch, total_val_accuracy * 100, raw.get_size('validation')))
 
-        checkpoint_path = os.path.join(FLAGS.train_dir, 'unet.ckpt')
-        tf.logging.info('Saving to "%s-%d"', checkpoint_path, epoch)
-        saver.save(sess, checkpoint_path, global_step=epoch)
+        # save checkpoint
+        # checkpoint_path = os.path.join(FLAGS.train_dir, 'unet.ckpt')
+        # tf.logging.info('Saving to "%s-%d"', checkpoint_path, epoch)
+        # saver.save(sess, checkpoint_path, global_step=epoch)
+        best_ckpt_saver.handle(total_val_accuracy, sess, global_step, epoch)
 
 
 
@@ -248,7 +257,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--data_dir',
-        default='../../dl_data/nucleus/stage1_train',
+        # default='../../dl_data/nucleus/stage1_train',
+        default='../../dl_data/nucleus/stage1_train_670',
         type=str,
         help="Data directory")
 
@@ -261,12 +271,12 @@ if __name__ == '__main__':
     parser.add_argument(
         '--epochs',
         type=int,
-        default=50,
+        default=100,
         help='Number of epochs')
 
     parser.add_argument(
         '--batch_size',
-        default=16,
+        default=4,
         type=int,
         help="Batch size")
 
@@ -291,7 +301,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--ckpt_dir',
         type=str,
-        # default=os.getcwd() + '/models/unet.ckpt-30',
+        # default=os.getcwd() + '/models/unet.ckpt-31',
         default='',
         help="Checkpoint directory")
 
