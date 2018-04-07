@@ -60,8 +60,8 @@ def main(_):
     X = tf.placeholder(tf.float32, shape=[None, FLAGS.img_size, FLAGS.img_size, 3], name="X")
     mode = tf.placeholder(tf.bool, name="mode")  # training or not
 
-    pred = Unet_64_1024(X, mode, FLAGS)
-    # pred = Unet_32_512(X, mode, FLAGS)
+    # pred = Unet_64_1024(X, mode, FLAGS)
+    pred = Unet_32_512(X, mode, FLAGS)
     # evaluation = tf.argmax(logits, 1)
 
     sess.run(tf.global_variables_initializer())
@@ -188,7 +188,7 @@ if __name__ == '__main__':
 
     parser.add_argument(
         '--batch_size',
-        default=8,
+        default=16,
         type=int,
         help="Batch size")
 

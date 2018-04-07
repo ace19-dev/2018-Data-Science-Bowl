@@ -119,8 +119,8 @@ def main(_):
     GT = tf.placeholder(tf.float32, shape=[None, FLAGS.img_size, FLAGS.img_size, 1], name="GT")
     mode = tf.placeholder(tf.bool, name="mode") # training or not
 
-    pred = Unet_64_1024(X, mode, FLAGS)
-    # pred = Unet_32_512(X, mode, FLAGS)
+    # pred = Unet_64_1024(X, mode, FLAGS)
+    pred = Unet_32_512(X, mode, FLAGS)
 
     tf.add_to_collection("inputs", X)
     tf.add_to_collection("inputs", mode)
@@ -282,7 +282,7 @@ if __name__ == '__main__':
 
     parser.add_argument(
         '--batch_size',
-        default=8,
+        default=16,
         type=int,
         help="Batch size")
 
