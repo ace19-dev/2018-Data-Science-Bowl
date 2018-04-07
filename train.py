@@ -47,9 +47,6 @@ FLAGS = None
 
 from utils.checkmate import BestCheckpointSaver
 
-# specify GPU
-os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
-os.environ["CUDA_VISIBLE_DEVICES"]="0"
 
 def IOU(y_pred, y_true):
     """Returns a (approx) batch_norm_wrapper score
@@ -109,6 +106,11 @@ def get_start_epoch_number(latest_check_point):
 
 
 def main(_):
+    # specify GPU
+    if FLAGS.gpu_index:
+        os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+        os.environ["CUDA_VISIBLE_DEVICES"] = FLAGS.gpu_index
+
     # We want to see all the logging messages for this tutorial.
     tf.logging.set_verbosity(tf.logging.INFO)
 
@@ -117,8 +119,8 @@ def main(_):
     GT = tf.placeholder(tf.float32, shape=[None, FLAGS.img_size, FLAGS.img_size, 1], name="GT")
     mode = tf.placeholder(tf.bool, name="mode") # training or not
 
-    # pred = Unet(X, mode, FLAGS)
-    pred = Unet_32_512(X, mode, FLAGS)
+    pred = Unet_64_1024(X, mode, FLAGS)
+    # pred = Unet_32_512(X, mode, FLAGS)
 
     tf.add_to_collection("inputs", X)
     tf.add_to_collection("inputs", mode)
@@ -149,13 +151,14 @@ def main(_):
     saver = tf.train.Saver()
 
     # For, checkpoint saver
-    best_ckpt_saver = BestCheckpointSaver(title='unet.ckpt', save_dir=FLAGS.train_dir, num_to_keep=3, maximize=True)
+    if FLAGS.besk_train_dir:
+        best_ckpt_saver = BestCheckpointSaver(title='unet.ckpt', save_dir=FLAGS.besk_train_dir, num_to_keep=3, maximize=True)
 
     start_epoch = 1
     epoch_from_ckpt = 0
-    if FLAGS.ckpt_dir:
-        saver.restore(sess, FLAGS.ckpt_dir)
-        tmp = FLAGS.ckpt_dir
+    if FLAGS.ckpt_path:
+        saver.restore(sess, FLAGS.ckpt_path)
+        tmp = FLAGS.ckpt_path
         tmp = tmp.split('-')
         tmp.reverse()
         epoch_from_ckpt = int(tmp[0])
@@ -246,10 +249,13 @@ def main(_):
                         (epoch, total_val_accuracy * 100, raw.get_size('validation')))
 
         # save checkpoint
-        # checkpoint_path = os.path.join(FLAGS.train_dir, 'unet.ckpt')
-        # tf.logging.info('Saving to "%s-%d"', checkpoint_path, epoch)
-        # saver.save(sess, checkpoint_path, global_step=epoch)
-        best_ckpt_saver.handle(total_val_accuracy, sess, global_step, epoch)
+        checkpoint_path = os.path.join(FLAGS.train_dir, 'unet.ckpt')
+        tf.logging.info('Saving to "%s-%d"', checkpoint_path, epoch)
+        saver.save(sess, checkpoint_path, global_step=epoch)
+
+        # save best checkpoint
+        if FLAGS.besk_train_dir:
+            best_ckpt_saver.handle(total_val_accuracy, sess, global_step, epoch)
 
 
 
@@ -257,8 +263,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--data_dir',
-        # default='../../dl_data/nucleus/stage1_train',
-        default='../../dl_data/nucleus/stage1_train_670',
+        default='../../dl_data/nucleus/stage1_train',
+        # default='../../dl_data/nucleus/stage1_train_670',
         type=str,
         help="Data directory")
 
@@ -292,6 +298,13 @@ if __name__ == '__main__':
         default=os.getcwd() + '/models',
         help='Directory to write event logs and checkpoint.')
 
+    parser.add_argument(
+        '--besk_train_dir',
+        type=str,
+        default=os.getcwd() + '/models_best',
+        # default='',
+        help="Directory to write best checkpoint.")
+
     # parser.add_argument(
     #     '--reg',
     #     type=float,
@@ -299,17 +312,26 @@ if __name__ == '__main__':
     #     help="L2 Regularizer Term")
 
     parser.add_argument(
-        '--ckpt_dir',
+        '--ckpt_path',
         type=str,
         # default=os.getcwd() + '/models/unet.ckpt-31',
         default='',
-        help="Checkpoint directory")
+        help="Checkpoint path")
 
     parser.add_argument(
         '--img_size',
         type=int,
         default=256,
         help="Image height and width")
+
+    parser.add_argument(
+        '--gpu_index',
+        type=str,
+        default='0',
+        # default='0',
+        help="Set the gpu index.")
+
+
 
     FLAGS, unparsed = parser.parse_known_args()
     tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
