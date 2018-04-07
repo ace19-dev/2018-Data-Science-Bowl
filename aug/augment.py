@@ -74,6 +74,7 @@ def main(_):
                                          width_shift_range=0.02,
                                          height_shift_range=0.02,
                                          # zoom_range=0.2,
+                                         fill_mode='reflect',
                                          horizontal_flip=True,
                                          vertical_flip=True)
 
