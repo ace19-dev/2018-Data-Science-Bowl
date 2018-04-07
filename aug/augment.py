@@ -71,12 +71,13 @@ def generate_images(image_generator, src_path, target_dir, seed=None):
 
 def main(_):
     img_gen = ImageDataGenerator(rotation_range=90.,
-                                         width_shift_range=0.05,
-                                         height_shift_range=0.05,
-                                         zoom_range=0.2,
-                                         fill_mode='reflect',
-                                         horizontal_flip=True,
-                                         vertical_flip=True)
+                                 width_shift_range=0.03,
+                                 height_shift_range=0.03,
+                                 brightness_range=[1.0, 1.2],
+                                 zoom_range=0.2,
+                                 fill_mode='reflect',
+                                 horizontal_flip=True,
+                                 vertical_flip=True)
 
     train_info = read_train_data_properties(FLAGS.train_dir)
 
