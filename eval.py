@@ -40,7 +40,7 @@ import pandas as pd
 import numpy as np
 import tensorflow as tf
 
-from nets.unet import Unet_32_512
+from nets.unet import Unet_32_512, Unet_64_1024
 from utils.data_oper import read_test_data_properties, mask_to_rle, \
                                 trsf_proba_to_binary, rle_to_mask
 from input_pred_data import Data
@@ -60,7 +60,8 @@ def main(_):
     X = tf.placeholder(tf.float32, shape=[None, FLAGS.img_size, FLAGS.img_size, 3], name="X")
     mode = tf.placeholder(tf.bool, name="mode")  # training or not
 
-    pred = Unet_32_512(X, mode, FLAGS)
+    pred = Unet_64_1024(X, mode, FLAGS)
+    # pred = Unet_32_512(X, mode, FLAGS)
     # evaluation = tf.argmax(logits, 1)
 
     sess.run(tf.global_variables_initializer())
@@ -187,7 +188,7 @@ if __name__ == '__main__':
 
     parser.add_argument(
         '--batch_size',
-        default=16,
+        default=8,
         type=int,
         help="Batch size")
 

@@ -115,8 +115,8 @@ def main(_):
     GT = tf.placeholder(tf.float32, shape=[None, FLAGS.img_size, FLAGS.img_size, 1], name="GT")
     mode = tf.placeholder(tf.bool, name="mode") # training or not
 
-    # pred = Unet(X, mode, FLAGS)
-    pred = Unet_32_512(X, mode, FLAGS)
+    pred = Unet_64_1024(X, mode, FLAGS)
+    # pred = Unet_32_512(X, mode, FLAGS)
 
     tf.add_to_collection("inputs", X)
     tf.add_to_collection("inputs", mode)
@@ -266,7 +266,7 @@ if __name__ == '__main__':
 
     parser.add_argument(
         '--batch_size',
-        default=16,
+        default=8,
         type=int,
         help="Batch size")
 
@@ -291,8 +291,8 @@ if __name__ == '__main__':
     parser.add_argument(
         '--ckpt_dir',
         type=str,
-        # default=os.getcwd() + '/models/unet.ckpt-30',
-        default='',
+        default=os.getcwd() + '/models/unet.ckpt-11',
+        # default='',
         help="Checkpoint directory")
 
     parser.add_argument(
