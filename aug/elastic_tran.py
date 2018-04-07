@@ -10,7 +10,7 @@ from scipy.ndimage.filters import gaussian_filter
 from tqdm import tqdm
 
 
-TRAIN_PATH = '../../dl_data/nucleus/stage1_train/'
+TRAIN_PATH = '../../../dl_data/nucleus/stage1_train/'
 
 new_id_prefix = '_elastic_'
 

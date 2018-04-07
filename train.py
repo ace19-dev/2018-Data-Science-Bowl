@@ -291,8 +291,8 @@ if __name__ == '__main__':
     parser.add_argument(
         '--ckpt_dir',
         type=str,
-        default=os.getcwd() + '/models/unet.ckpt-30',
-        # default='',
+        # default=os.getcwd() + '/models/unet.ckpt-30',
+        default='',
         help="Checkpoint directory")
 
     parser.add_argument(

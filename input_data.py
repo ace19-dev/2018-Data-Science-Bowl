@@ -70,10 +70,10 @@ class Data(object):
         # Make sure the shuffling and picking of unknowns is deterministic.
         random.seed(RANDOM_SEED)
         self.data_index = {'validation': [], 'training': []}
-        data_path = os.listdir(self.data_dir)
-        for image_path in data_path:
-            set_index = which_set(image_path, validation_percentage)
-            self.data_index[set_index].append({'image': image_path})
+        data_paths = os.listdir(self.data_dir)
+        for img_path in data_paths:
+            set_index = which_set(img_path, validation_percentage)
+            self.data_index[set_index].append({'image': img_path})
 
         # Make sure the ordering is random.
         for set_index in ['validation', 'training']:
@@ -114,10 +114,14 @@ class DataLoader(object):
         mask_paths = np.array(data)
 
         for idx, image_path in enumerate(image_paths):
-            image_paths[idx] = \
-                os.path.join(data_dir, image_path['image'], 'images', image_path['image']) + '.png'
-            mask_paths[idx] = \
-                os.path.join(data_dir, image_path['image'], 'gt_mask', image_path['image']) + '.png'
+            img_dir = os.path.join(data_dir, image_path['image'], 'images')
+            mask_dir = os.path.join(data_dir, image_path['image'], 'gt_mask')
+
+            img = os.listdir(img_dir)
+            mask = os.listdir(mask_dir)
+
+            image_paths[idx] = os.path.join(img_dir, img[0])
+            mask_paths[idx] = os.path.join(mask_dir, mask[0])
 
         # convert lists to TF tensor
         image_paths = convert_to_tensor(image_paths, dtype=dtypes.string)
