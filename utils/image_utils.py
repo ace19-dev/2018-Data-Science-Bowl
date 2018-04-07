@@ -5,6 +5,9 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 
+import tensorflow as tf
+
+
 
 def read_image(filepath, color_mode=cv2.IMREAD_COLOR, target_size=None):
     """Read an image from a file and resize it."""
@@ -23,7 +26,7 @@ def read_mask(directory, target_size=None):
             mask = mask_tmp
         else:
             mask = np.maximum(mask, mask_tmp)
-    return mask
+    return tf.expand_dims(mask, -1)
 
 
 def plot_image(image: np.ndarray, title: Optional[str]=None, **kwargs) -> None:
