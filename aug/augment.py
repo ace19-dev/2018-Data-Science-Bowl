@@ -71,9 +71,9 @@ def generate_images(image_generator, src_path, target_dir, seed=None):
 
 def main(_):
     img_gen = ImageDataGenerator(rotation_range=90.,
-                                         width_shift_range=0.02,
-                                         height_shift_range=0.02,
-                                         # zoom_range=0.2,
+                                         width_shift_range=0.05,
+                                         height_shift_range=0.05,
+                                         zoom_range=0.2,
                                          fill_mode='reflect',
                                          horizontal_flip=True,
                                          vertical_flip=True)
@@ -116,7 +116,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--aug_count',
         type=int,
-        default=3,
+        default=2,
         help="Count of augmentation")
 
     FLAGS, unparsed = parser.parse_known_args()
