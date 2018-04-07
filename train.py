@@ -45,6 +45,7 @@ from input_data import DataLoader
 
 FLAGS = None
 
+from utils.checkmate import BestCheckpointSaver
 
 
 def IOU(y_pred, y_true):
@@ -92,12 +93,10 @@ def make_train_op(y_pred, y_true):
     """
     loss = -IOU(y_pred, y_true)
 
-    global_step = tf.train.get_or_create_global_step()
-
     # other optimizer will be used
     # optim = tf.train.AdamOptimizer()
     optim = tf.train.MomentumOptimizer(0.0001, 0.99)
-    return optim.minimize(loss, global_step=global_step)
+    return optim.minimize(loss)
 
 
 def get_start_epoch_number(latest_check_point):
@@ -107,6 +106,11 @@ def get_start_epoch_number(latest_check_point):
 
 
 def main(_):
+    # specify GPU
+    if FLAGS.gpu_index:
+        os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+        os.environ["CUDA_VISIBLE_DEVICES"] = FLAGS.gpu_index
+
     # We want to see all the logging messages for this tutorial.
     tf.logging.set_verbosity(tf.logging.INFO)
 
@@ -134,6 +138,9 @@ def main(_):
     # IOU_op = -IOU(pred, GT)
     tf.summary.scalar("IOU", IOU_op)
 
+    global_step = tf.train.get_or_create_global_step()
+    increment_global_step = tf.assign(global_step, global_step + 1)
+
     sess = tf.Session()
     sess.run(tf.global_variables_initializer())
 
@@ -143,11 +150,15 @@ def main(_):
 
     saver = tf.train.Saver()
 
+    # For, checkpoint saver
+    if FLAGS.best_train_dir:
+        best_ckpt_saver = BestCheckpointSaver(title='unet.ckpt', save_dir=FLAGS.best_train_dir, num_to_keep=3, maximize=True)
+
     start_epoch = 1
     epoch_from_ckpt = 0
-    if FLAGS.ckpt_dir:
-        saver.restore(sess, FLAGS.ckpt_dir)
-        tmp = FLAGS.ckpt_dir
+    if FLAGS.ckpt_path:
+        saver.restore(sess, FLAGS.ckpt_path)
+        tmp = FLAGS.ckpt_path
         tmp = tmp.split('-')
         tmp.reverse()
         epoch_from_ckpt = int(tmp[0])
@@ -191,7 +202,6 @@ def main(_):
     if val_data.data_size % FLAGS.batch_size > 0:
         val_batches_per_epoch += 1
 
-
     ############################
     # Training
     ############################
@@ -202,8 +212,8 @@ def main(_):
         sess.run(tr_init_op)
         for step in range(tr_batches_per_epoch):
             X_train, y_train = sess.run(next_batch)
-            train_summary, accuracy, _ = \
-                sess.run([summary_op, IOU_op, train_op],
+            train_summary, accuracy, _, _ = \
+                sess.run([summary_op, IOU_op, train_op, increment_global_step],
                          feed_dict={X: X_train,
                                     GT: y_train,
                                     mode: True}
@@ -238,9 +248,14 @@ def main(_):
         tf.logging.info('step %d: Validation accuracy = %.2f%% (N=%d)' %
                         (epoch, total_val_accuracy * 100, raw.get_size('validation')))
 
+        # save checkpoint
         checkpoint_path = os.path.join(FLAGS.train_dir, 'unet.ckpt')
         tf.logging.info('Saving to "%s-%d"', checkpoint_path, epoch)
         saver.save(sess, checkpoint_path, global_step=epoch)
+
+        # save best checkpoint
+        if FLAGS.best_train_dir:
+            best_ckpt_saver.handle(total_val_accuracy, sess, global_step, epoch)
 
 
 
@@ -249,6 +264,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--data_dir',
         default='../../dl_data/nucleus/stage1_train',
+        # default='../../dl_data/nucleus/stage1_train_670',
         type=str,
         help="Data directory")
 
@@ -282,6 +298,13 @@ if __name__ == '__main__':
         default=os.getcwd() + '/models',
         help='Directory to write event logs and checkpoint.')
 
+    parser.add_argument(
+        '--best_train_dir',
+        type=str,
+        # default=os.getcwd() + '/models_best',
+        default=None,
+        help="Directory to write best checkpoint.")
+
     # parser.add_argument(
     #     '--reg',
     #     type=float,
@@ -289,10 +312,10 @@ if __name__ == '__main__':
     #     help="L2 Regularizer Term")
 
     parser.add_argument(
-        '--ckpt_dir',
+        '--ckpt_path',
         type=str,
-        default=os.getcwd() + '/models/unet.ckpt-11',
-        # default='',
+        # default=os.getcwd() + '/models/unet.ckpt-11',
+        default='',
         help="Checkpoint directory")
 
     parser.add_argument(
@@ -300,6 +323,13 @@ if __name__ == '__main__':
         type=int,
         default=256,
         help="Image height and width")
+
+    parser.add_argument(
+        '--gpu_index',
+        type=str,
+        # default='0',
+        default=None,
+        help="Set the gpu index. If you not sepcify then auto")
 
     FLAGS, unparsed = parser.parse_known_args()
     tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
