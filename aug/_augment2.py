@@ -36,11 +36,11 @@ def read_train_data_properties(train_dir):
         img_path = os.path.join(img_dir, img_name)
         mask_path = os.path.join(mask_dir, mask_name)
         img_shape = read_image(img_path).shape
-        tmp.append(['{}'.format(img_name_id), img_shape[0], img_shape[1],
-                    img_shape[0] / img_shape[1], img_shape[2], img_path, img_dir, mask_path, mask_dir])
+        tmp.append(['{}'.format(img_name_id), img_shape[0], img_shape[1], img_shape[2],
+                    img_path, img_dir, mask_path, mask_dir])
 
-    train_df = pd.DataFrame(tmp, columns=['img_id', 'img_height', 'img_width', 'img_ratio',
-                                          'num_channels', 'image_path', 'image_dir', 'mask_path', 'mask_dir'])
+    train_df = pd.DataFrame(tmp, columns=['img_id', 'img_height', 'img_width', 'num_channels',
+                                          'image_path', 'image_dir', 'mask_path', 'mask_dir'])
     return train_df
 
 
@@ -61,90 +61,90 @@ def read_test_data_properties(test_dir):
     return test_df
 
 
-# def load_raw_data(train_df, test_df, target_size=None):
-#     """Load raw data."""
-#     # Python lists to store the training images/masks and test images.
-#     x_train, y_train, x_test = [], [], []
-#
-#     # Read and resize train images/masks.
-#     print('Loading and resizing train images and masks ...')
-#     sys.stdout.flush()
-#     for i, filename in tqdm.tqdm(enumerate(train_df['image_path']), total=len(train_df)):
-#         img = read_image(train_df['image_path'].loc[i], target_size=target_size)
-#         mask = read_mask(train_df['mask_dir'].loc[i], target_size=target_size)
-#         x_train.append(img)
-#         y_train.append(mask)
-#
-#     # Read and resize test images.
-#     print('Loading and resizing test images ...')
-#     sys.stdout.flush()
-#     for i, filename in tqdm.tqdm(enumerate(test_df['image_path']), total=len(test_df)):
-#         img = read_image(test_df['image_path'].loc[i], target_size=target_size)
-#         x_test.append(img)
-#
-#     # Transform lists into 4-dim numpy arrays.
-#     x_train = np.array(x_train)
-#     y_train = np.expand_dims(np.array(y_train), axis=4)
-#     x_test = np.array(x_test)
-#
-#     print('x_train.shape: {} of dtype {}'.format(x_train.shape, x_train.dtype))
-#     print('y_train.shape: {} of dtype {}'.format(y_train.shape, x_train.dtype))
-#     print('x_test.shape: {} of dtype {}'.format(x_test.shape, x_test.dtype))
-#
-#     return x_train, y_train, x_test
-#
-#
-# # Normalize all images and masks. There is the possibility to transform images
-# # into the grayscale sepctrum and to invert images which have a very
-# # light background.
-# def preprocess_raw_data(x_train, y_train, x_test, grayscale=False, invert=False):
-#     """Preprocessing of images and masks."""
-#     # Normalize images and masks
-#     x_train = normalize_imgs(x_train)
-#     y_train = trsf_proba_to_binary(normalize_masks(y_train))
-#     x_test = normalize_imgs(x_test)
-#     print('Images normalized.')
-#
-#     if grayscale:
-#         # Remove color and transform images into grayscale spectrum.
-#         x_train = imgs_to_grayscale(x_train)
-#         x_test = imgs_to_grayscale(x_test)
-#         print('Images transformed into grayscale spectrum.')
-#
-#     if invert:
-#         # Invert images, such that each image has a dark background.
-#         x_train = invert_imgs(x_train)
-#         x_test = invert_imgs(x_test)
-#         print('Images inverted to remove light backgrounds.')
-#
-#     return x_train, y_train, x_test
+def load_raw_data(train_df, test_df, target_size=None):
+    """Load raw data."""
+    # Python lists to store the training images/masks and test images.
+    x_train, y_train, x_test = [], [], []
+
+    # Read and resize train images/masks.
+    print('Loading and resizing train images and masks ...')
+    sys.stdout.flush()
+    for i, filename in tqdm.tqdm(enumerate(train_df['image_path']), total=len(train_df)):
+        img = read_image(train_df['image_path'].loc[i], target_size=target_size)
+        mask = read_mask(train_df['mask_dir'].loc[i], target_size=target_size)
+        x_train.append(img)
+        y_train.append(mask)
+
+    # Read and resize test images.
+    print('Loading and resizing test images ...')
+    sys.stdout.flush()
+    for i, filename in tqdm.tqdm(enumerate(test_df['image_path']), total=len(test_df)):
+        img = read_image(test_df['image_path'].loc[i], target_size=target_size)
+        x_test.append(img)
+
+    # Transform lists into 4-dim numpy arrays.
+    x_train = np.array(x_train)
+    y_train = np.expand_dims(np.array(y_train), axis=4)
+    x_test = np.array(x_test)
+
+    print('x_train.shape: {} of dtype {}'.format(x_train.shape, x_train.dtype))
+    print('y_train.shape: {} of dtype {}'.format(y_train.shape, x_train.dtype))
+    print('x_test.shape: {} of dtype {}'.format(x_test.shape, x_test.dtype))
+
+    return x_train, y_train, x_test
 
 
-# def image_augmentation(image, mask):
-#     """Returns (maybe) augmented images
-#     (1) Random flip (left <--> right)
-#     (2) Random flip (up <--> down)
-#     (3) Random brightness
-#     (4) Random hue
-#     Args:
-#         image (3-D Tensor): Image tensor of (H, W, C)
-#         mask (3-D Tensor): Mask image tensor of (H, W, 1)
-#     Returns:
-#         image: Maybe augmented image (same shape as input `image`)
-#         mask: Maybe augmented mask (same shape as input `mask`)
-#     """
-#     concat_image = tf.concat([image, mask], axis=-1)
-#
-#     maybe_flipped = tf.image.random_flip_left_right(concat_image)
-#     maybe_flipped = tf.image.random_flip_up_down(maybe_flipped)
-#
-#     image = maybe_flipped[:, :, :-1]
-#     mask = maybe_flipped[:, :, -1:]
-#
-#     image = tf.image.random_brightness(image, 0.7)
-#     image = tf.image.random_hue(image, 0.3)
-#
-#     return image, mask
+# Normalize all images and masks. There is the possibility to transform images
+# into the grayscale sepctrum and to invert images which have a very
+# light background.
+def preprocess_raw_data(x_train, y_train, x_test, grayscale=False, invert=False):
+    """Preprocessing of images and masks."""
+    # Normalize images and masks
+    x_train = normalize_imgs(x_train)
+    y_train = trsf_proba_to_binary(normalize_masks(y_train))
+    x_test = normalize_imgs(x_test)
+    print('Images normalized.')
+
+    if grayscale:
+        # Remove color and transform images into grayscale spectrum.
+        x_train = imgs_to_grayscale(x_train)
+        x_test = imgs_to_grayscale(x_test)
+        print('Images transformed into grayscale spectrum.')
+
+    if invert:
+        # Invert images, such that each image has a dark background.
+        x_train = invert_imgs(x_train)
+        x_test = invert_imgs(x_test)
+        print('Images inverted to remove light backgrounds.')
+
+    return x_train, y_train, x_test
+
+
+def image_augmentation(image, mask):
+    """Returns (maybe) augmented images
+    (1) Random flip (left <--> right)
+    (2) Random flip (up <--> down)
+    (3) Random brightness
+    (4) Random hue
+    Args:
+        image (3-D Tensor): Image tensor of (H, W, C)
+        mask (3-D Tensor): Mask image tensor of (H, W, 1)
+    Returns:
+        image: Maybe augmented image (same shape as input `image`)
+        mask: Maybe augmented mask (same shape as input `mask`)
+    """
+    concat_image = tf.concat([image, mask], axis=-1)
+
+    maybe_flipped = tf.image.random_flip_left_right(concat_image)
+    maybe_flipped = tf.image.random_flip_up_down(maybe_flipped)
+
+    image = maybe_flipped[:, :, :-1]
+    mask = maybe_flipped[:, :, -1:]
+
+    image = tf.image.random_brightness(image, 0.7)
+    image = tf.image.random_hue(image, 0.3)
+
+    return image, mask
 
 
 def make_aug_dir():
@@ -152,37 +152,6 @@ def make_aug_dir():
     _new = FLAGS.aug_prefix + randomString
 
     return _new
-
-
-def generate_images(image_generator, src_path, target_dir, seed=None):
-    """Generate new images."""
-    img = load_img(src_path)
-    x = img_to_array(img)
-    x = x.reshape((1,) + x.shape)  # this is a Numpy array
-
-    if not os.path.exists(target_dir):
-        os.makedirs(target_dir)
-
-    # Generate new set of images
-    batches = 1
-    for batch in image_generator.flow(x,
-                        batch_size=1,
-                        shuffle=False,
-                        seed=seed,
-                        save_to_dir=target_dir,
-                        save_prefix=''):
-
-        batches += 1
-        if batches > 1:
-            break  # otherwise the generator would loop indefinitely
-
-
-# def generate_images_and_masks(gen, imgs, masks):
-#     """Generate new images and masks."""
-#     seed = np.random.randint(10000)
-#     imgs = generate_images(gen, imgs, seed=seed)
-#     masks = trsf_proba_to_binary(generate_images(masks, seed=seed))
-#     return imgs, masks
 
 
 # def get_image_mask(queue, augmentation=True):
@@ -211,40 +180,14 @@ def generate_images(image_generator, src_path, target_dir, seed=None):
 
 
 def main(_):
-    img_gen = ImageDataGenerator(rotation_range=90.,
-                                         width_shift_range=0.02,
-                                         height_shift_range=0.02,
-                                         zoom_range=0.1,
-                                         horizontal_flip=True,
-                                         vertical_flip=True)
-
     train_info = read_train_data_properties(FLAGS.train_dir)
-    # test_info = read_test_data_properties(FLAGS.test_dir)
+    test_info = read_test_data_properties(FLAGS.test_dir)
 
     seed = np.random.randint(10000)
-    # image_augmentation
-    for i, filename in tqdm.tqdm(enumerate(train_info['image_path']), total=len(train_info)):
-        # img = read_image(train_info['image_path'].loc[i])
-        # mask = read_mask(train_info['mask_dir'].loc[i])
-        #
-        # seed = np.random.randint(10000)
-        # generate_images(image_generator, img, train_info['image_dir'].loc[i], seed=seed)
-        # generate_images(image_generator, mask, train_info['mask_dir'].loc[i], seed=seed)
 
-        for n in range(FLAGS.aug_count):
-            data_path = os.path.join(FLAGS.train_dir, make_aug_dir())
-
-            target_img_dir = os.path.join(data_path, 'images')
-            target_mask_dir = os.path.join(data_path, 'gt_mask')
-
-            generate_images(img_gen, train_info['image_path'].loc[i], target_img_dir, seed=seed)
-            generate_images(img_gen, train_info['mask_path'].loc[i], target_mask_dir, seed=seed)
-
-
-
-    # x_train, y_train, x_test = load_raw_data(train_info, test_info)
-    # x_train, y_train, x_test = \
-    #     preprocess_raw_data(x_train, y_train, x_test, invert=True)
+    x_train, y_train, x_test = load_raw_data(train_info, test_info)
+    x_train, y_train, x_test = \
+        preprocess_raw_data(x_train, y_train, x_test, invert=True)
 
 
 
