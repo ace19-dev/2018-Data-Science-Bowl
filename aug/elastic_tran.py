@@ -77,6 +77,7 @@ def main(_):
             cv2.imwrite(FLAGS.train_dir + new_id + '/images/' + new_id + '.png', im_t)
             cv2.imwrite(FLAGS.train_dir + new_id + '/gt_mask/' + new_id + '.png', mask_t)
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
