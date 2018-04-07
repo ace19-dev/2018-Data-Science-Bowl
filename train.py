@@ -151,8 +151,8 @@ def main(_):
     saver = tf.train.Saver()
 
     # For, checkpoint saver
-    if FLAGS.besk_train_dir:
-        best_ckpt_saver = BestCheckpointSaver(title='unet.ckpt', save_dir=FLAGS.besk_train_dir, num_to_keep=3, maximize=True)
+    if FLAGS.best_train_dir:
+        best_ckpt_saver = BestCheckpointSaver(title='unet.ckpt', save_dir=FLAGS.best_train_dir, num_to_keep=3, maximize=True)
 
     start_epoch = 1
     epoch_from_ckpt = 0
@@ -254,7 +254,7 @@ def main(_):
         saver.save(sess, checkpoint_path, global_step=epoch)
 
         # save best checkpoint
-        if FLAGS.besk_train_dir:
+        if FLAGS.best_train_dir:
             best_ckpt_saver.handle(total_val_accuracy, sess, global_step, epoch)
 
 
@@ -299,7 +299,7 @@ if __name__ == '__main__':
         help='Directory to write event logs and checkpoint.')
 
     parser.add_argument(
-        '--besk_train_dir',
+        '--best_train_dir',
         type=str,
         default=os.getcwd() + '/models_best',
         # default='',
