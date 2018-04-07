@@ -328,8 +328,8 @@ if __name__ == '__main__':
         '--gpu_index',
         type=str,
         default='0',
-        # default='0',
-        help="Set the gpu index.")
+        # default='',
+        help="Set the gpu index. If you not sepcify then auto")
 
 
 
