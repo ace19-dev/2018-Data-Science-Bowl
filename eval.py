@@ -65,8 +65,10 @@ def main(_):
     X = tf.placeholder(tf.float32, shape=[None, FLAGS.img_size, FLAGS.img_size, 3], name="X")
     mode = tf.placeholder(tf.bool, name="mode")  # training or not
 
-    pred = Unet_64_1024(X, mode, FLAGS)
-    # pred = Unet_32_512(X, mode, FLAGS)
+    if FLAGS.use_64_channel:
+        pred = Unet_64_1024(X, mode, FLAGS)
+    else:
+        pred = Unet_32_512(X, mode, FLAGS)
     # evaluation = tf.argmax(logits, 1)
 
     sess.run(tf.global_variables_initializer())
@@ -232,6 +234,13 @@ if __name__ == '__main__':
         # default='0',
         default=None,
         help="Set the gpu index. If you not sepcify then auto")
+
+    parser.add_argument(
+        '--use_64_channel',
+        type=bool,
+        default=True,
+        # default=False,
+        help="If you set True then use the Unet_64_1024. otherwise use the Unet_32_512")
 
     FLAGS, unparsed = parser.parse_known_args()
     tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
