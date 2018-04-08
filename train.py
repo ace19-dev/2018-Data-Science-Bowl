@@ -95,7 +95,7 @@ def make_train_op(y_pred, y_true):
 
     # other optimizer will be used
     # optim = tf.train.AdamOptimizer()
-    optim = tf.train.MomentumOptimizer(0.0001, 0.99)
+    optim = tf.train.MomentumOptimizer(0.001, 0.99)
     return optim.minimize(loss)
 
 
@@ -202,6 +202,7 @@ def main(_):
     if val_data.data_size % FLAGS.batch_size > 0:
         val_batches_per_epoch += 1
 
+
     ############################
     # Training
     ############################
@@ -277,12 +278,12 @@ if __name__ == '__main__':
     parser.add_argument(
         '--epochs',
         type=int,
-        default=50,
+        default=30,
         help='Number of epochs')
 
     parser.add_argument(
         '--batch_size',
-        default=16,
+        default=24,
         type=int,
         help="Batch size")
 
