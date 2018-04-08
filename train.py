@@ -119,8 +119,8 @@ def main(_):
     GT = tf.placeholder(tf.float32, shape=[None, FLAGS.img_size, FLAGS.img_size, 1], name="GT")
     mode = tf.placeholder(tf.bool, name="mode") # training or not
 
-    pred = Unet_64_1024(X, mode, FLAGS)
-    # pred = Unet_32_512(X, mode, FLAGS)
+    # pred = Unet_64_1024(X, mode, FLAGS)
+    pred = Unet_32_512(X, mode, FLAGS)
 
     tf.add_to_collection("inputs", X)
     tf.add_to_collection("inputs", mode)
@@ -277,12 +277,12 @@ if __name__ == '__main__':
     parser.add_argument(
         '--epochs',
         type=int,
-        default=100,
+        default=50,
         help='Number of epochs')
 
     parser.add_argument(
         '--batch_size',
-        default=4,
+        default=16,
         type=int,
         help="Batch size")
 
@@ -301,8 +301,8 @@ if __name__ == '__main__':
     parser.add_argument(
         '--best_train_dir',
         type=str,
-        default=os.getcwd() + '/models_best',
-        # default='',
+        # default=os.getcwd() + '/models_best',
+        default=None,
         help="Directory to write best checkpoint.")
 
     # parser.add_argument(
@@ -314,9 +314,9 @@ if __name__ == '__main__':
     parser.add_argument(
         '--ckpt_path',
         type=str,
-        # default=os.getcwd() + '/models/unet.ckpt-31',
+        # default=os.getcwd() + '/models/unet.ckpt-11',
         default='',
-        help="Checkpoint path")
+        help="Checkpoint directory")
 
     parser.add_argument(
         '--img_size',
@@ -327,11 +327,9 @@ if __name__ == '__main__':
     parser.add_argument(
         '--gpu_index',
         type=str,
-        default='0',
-        # default='',
+        # default='0',
+        default=None,
         help="Set the gpu index. If you not sepcify then auto")
-
-
 
     FLAGS, unparsed = parser.parse_known_args()
     tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
