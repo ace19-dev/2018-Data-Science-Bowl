@@ -21,7 +21,7 @@ def main(_):
     sys.stdout.flush()
 
     for n, id_ in tqdm(enumerate(train_ids), total=len(train_ids)):
-        for aug_count in (1, FLAGS.aug_count):
+        for aug_count in range (0, FLAGS.aug_count):
             path = FLAGS.train_dir + id_
             image_ = cv2.imread(path + '/images/' + id_ + '.png')
             # image_ = cv2.cvtColor(image_, cv2.COLOR_RGBA2GRAY)
@@ -94,7 +94,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--aug_count',
         type=int,
-        default=2,
+        default=3,
         help="Count of augmentation")
 
     FLAGS, unparsed = parser.parse_known_args()
