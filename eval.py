@@ -50,6 +50,11 @@ FLAGS = None
 
 
 def main(_):
+    # specify GPU
+    if FLAGS.gpu_index:
+        os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+        os.environ["CUDA_VISIBLE_DEVICES"] = FLAGS.gpu_index
+
     tf.logging.set_verbosity(tf.logging.INFO)
 
     # TensorFlow session: grow memory when needed. TF, DO NOT USE ALL MY GPU MEMORY!!!
@@ -60,23 +65,27 @@ def main(_):
     X = tf.placeholder(tf.float32, shape=[None, FLAGS.img_size, FLAGS.img_size, 3], name="X")
     mode = tf.placeholder(tf.bool, name="mode")  # training or not
 
-    # pred = Unet_64_1024(X, mode, FLAGS)
-    pred = Unet_32_512(X, mode, FLAGS)
+    pred = Unet_64_1024(X, mode, FLAGS)
+    # pred = Unet_32_512(X, mode, FLAGS)
     # evaluation = tf.argmax(logits, 1)
 
     sess.run(tf.global_variables_initializer())
 
     # Restore variables from training checkpoints.
     saver = tf.train.Saver()
-    ckpt = tf.train.get_checkpoint_state(FLAGS.checkpoint_dir)
-    if ckpt and ckpt.model_checkpoint_path:
-        saver.restore(sess, ckpt.model_checkpoint_path)
-        # Assuming model_checkpoint_path looks something like:
-        #   /my-favorite-path/imagenet_train/model.ckpt-0,
-        # extract global_step from it.
-        global_step = ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1]
+    checkpoint_path = None
+    if FLAGS.checkpoint_dir and FLAGS.checkpoint_file:
+        checkpoint_path = FLAGS.checkpoint_dir+'/'+FLAGS.checkpoint_file
+    else:
+        ckpt = tf.train.get_checkpoint_state(FLAGS.checkpoint_dir)
+        if ckpt and ckpt.model_checkpoint_path:
+            checkpoint_path = ckpt.model_checkpoint_path
+
+    if checkpoint_path:
+        saver.restore(sess, checkpoint_path)
+        global_step = checkpoint_path.split('/')[-1].split('-')[-1]
         print('Successfully loaded model from %s at step=%s.' % (
-            ckpt.model_checkpoint_path, global_step))
+            checkpoint_path, global_step))
     else:
         print('No checkpoint file found at %s' % FLAGS.checkpoint_dir)
         return
@@ -196,7 +205,14 @@ if __name__ == '__main__':
         '--checkpoint_dir',
         type=str,
         default=os.getcwd() + '/models',
-        help='Directory to write event logs and checkpoint.')
+        help='Directory to read checkpoint.')
+
+    parser.add_argument(
+        '--checkpoint_file',
+        type=str,
+        # default='unet.ckpt-50',
+        default=None,
+        help='checkpoint file name.')
 
     parser.add_argument(
         '--result_dir',
@@ -207,8 +223,15 @@ if __name__ == '__main__':
     parser.add_argument(
         '--img_size',
         type=int,
-        default=256,
+        default=512,
         help="Image height and width")
+
+    parser.add_argument(
+        '--gpu_index',
+        type=str,
+        # default='0',
+        default=None,
+        help="Set the gpu index. If you not sepcify then auto")
 
     FLAGS, unparsed = parser.parse_known_args()
     tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
