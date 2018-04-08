@@ -170,7 +170,7 @@ def main(_):
     test_pred_ids = []
     for n, _id in enumerate(test_df['img_id']):
         min_object_size = 20 * test_df.loc[n, 'img_height'] * test_df.loc[n, 'img_width'] / (256 * 256)
-        rle = list(mask_to_rle(test_pred_to_original_size[n], cutoff=.4, min_object_size=min_object_size))
+        rle = list(mask_to_rle(test_pred_to_original_size[n], min_object_size=min_object_size))
         test_pred_rle.extend(rle)
         test_pred_ids.extend([_id] * len(rle))
 
