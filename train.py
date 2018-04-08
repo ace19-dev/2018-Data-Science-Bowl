@@ -72,6 +72,11 @@ def IOU(y_pred, y_true):
 
     return tf.reduce_mean(intersection / denominator)
 
+    # smooth = 1.
+    # intersection = 2. * tf.reduce_sum(pred_flat * true_flat, axis=1) + smooth
+    # denominator = tf.reduce_sum(pred_flat, axis=1) + tf.reduce_sum(true_flat, axis=1) + smooth
+    # return tf.reduce_mean(intersection / denominator)
+
 
 def make_train_op(y_pred, y_true):
     """Returns a training operation
@@ -119,8 +124,10 @@ def main(_):
     GT = tf.placeholder(tf.float32, shape=[None, FLAGS.img_size, FLAGS.img_size, 1], name="GT")
     mode = tf.placeholder(tf.bool, name="mode") # training or not
 
-    # pred = Unet_64_1024(X, mode, FLAGS)
-    pred = Unet_32_512(X, mode, FLAGS)
+    if FLAGS.use_64_channel:
+        pred = Unet_64_1024(X, mode, FLAGS)
+    else:
+        pred = Unet_32_512(X, mode, FLAGS)
 
     tf.add_to_collection("inputs", X)
     tf.add_to_collection("inputs", mode)
@@ -322,7 +329,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--img_size',
         type=int,
-        default=256,
+        default=512,
         help="Image height and width")
 
     parser.add_argument(
@@ -331,6 +338,12 @@ if __name__ == '__main__':
         # default='0',
         default=None,
         help="Set the gpu index. If you not sepcify then auto")
+
+    parser.add_argument(
+        '--use_64_channel',
+        type=bool,
+        default=False,
+        help="If you set True then use the Unet_64_1024. otherwise use the Unet_32_512")
 
     FLAGS, unparsed = parser.parse_known_args()
     tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
