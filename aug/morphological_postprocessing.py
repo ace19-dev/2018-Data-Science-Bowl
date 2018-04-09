@@ -1,16 +1,26 @@
 import os
+import sys
+import argparse
 
+from itertools import product
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.externals import joblib
 import cv2
-from aug import morphological_util as mp
+import skimage.morphology as morph
+from skimage.filters import threshold_otsu
+import scipy.ndimage as ndi
+from scipy.stats import itemfreq
 
-#masks, contours, ground_truth = joblib.load('../../../dl_data/nucleus/masks_contours_ground_truth_train.pkl')
-ground_truth = mp.get_ground_truth(images_dir='/home/hong/dl_data/nucleus', subdir_name='stage1_train', target_dir='/home/hong/dl_data/nucleus/ground_truth/')
-contours = mp.overlay_contours(images_dir='/home/hong/dl_data/nucleus', subdir_name='stage1_train', target_dir='/home/hong/dl_data/nucleus/contours_touching_overlayed/')
-masks = mp.overlay_masks(images_dir='/home/hong/dl_data/nucleus', subdir_name='stage1_train', target_dir='/home/hong/dl_data/nucleus/mask_overlayed/')
+
+from aug.morphological_util import get_ground_truth, overlay_contours, overlay_masks
+
+import tensorflow as tf
+
+
+FLAGS = None
+
 
 
 def plot_list(images, labels):
@@ -27,48 +37,8 @@ def plot_list(images, labels):
     plt.show()
 
 
-for idx in range(5):
-    print(idx)
-    mask = masks[idx]
-    contour = contours[idx]
-    gt = ground_truth[idx]
-
-    plot_list(images=[mask, contour], labels=[gt])
-
-
-
-## clean masks
-## Problem 1 dirty masks
-
-
-
-idx = 5
-dirty = masks[idx], contours[idx], ground_truth[idx]
-
-plot_list(images = [dirty[0],dirty[1]],
-          labels = [dirty[2]])
-
-
-
-## Problem 2 dirty at border
-
-idx = 44
-dirty_at_border = masks[idx], contours[idx], ground_truth[idx]
-
-plot_list(images = [dirty_at_border[0],dirty_at_border[1]],
-          labels = [dirty_at_border[2]])
-
-
-
-### Approach V1
-### Let's build a function that calculates the average size of the nuclei.
-### We will need to to choose the structural element for our postprocessing
-
-import skimage.morphology as morph
-from skimage.filters import threshold_otsu
-import scipy.ndimage as ndi
-from scipy.stats import itemfreq
-
+# calculates the average size of the nuclei.
+# We will need to to choose the structural element for our postprocessing
 def mean_blob_size(mask):
     labels, labels_nr = ndi.label(mask)
     if labels_nr < 2:
@@ -78,26 +48,6 @@ def mean_blob_size(mask):
         mean_area = int(itemfreq(labels)[1:, 1].mean())
         mean_radius = int(np.round(np.sqrt(mean_area) / np.pi))
     return mean_area, mean_radius
-
-m, c, t = dirty
-
-m_b = m > threshold_otsu(m)
-c_b = c > threshold_otsu(c)
-
-plot_list(images=[m_b,c_b],labels=[])
-
-m_ = np.where(m_b | c_b, 1, 0)
-plot_list(images=[m_],labels=[])
-
-m_ = ndi.binary_fill_holes(m_)
-plot_list(images=[m_],labels=[])
-
-m_ = np.where(c_b & (~m_b), 0, m_)
-plot_list(images=[m_],labels=[])
-
-area, radius = mean_blob_size(m_b)
-m_ = morph.binary_opening(m_, selem=morph.disk(0.25*radius))
-plot_list(images=[m_],labels=[])
 
 
 def clean_mask_v1(m, c):
@@ -112,35 +62,6 @@ def clean_mask_v1(m, c):
     m_ = morph.binary_opening(m_, selem=morph.disk(0.25 * radius))
     return m_
 
-m, c, t = dirty
-
-m_ = clean_mask_v1(m,c)
-
-plot_list(images = [m,c,m_],
-          labels = [t]
-         )
-
-m,c,t = dirty_at_border
-m_ = clean_mask_v1(m,c)
-
-plot_list(images = [m,c,m_],
-          labels = [t]
-         )
-
-
-### Approach V2¶
-### Let's start by binarizing and filling the holes again
-
-m,c,t = dirty_at_border
-
-# threshold
-m_b = m > threshold_otsu(m)
-c_b = c > threshold_otsu(c)
-
-# combine contours and masks and fill the cells
-m_ = np.where(m_b | c_b, 1, 0)
-m_ = ndi.binary_fill_holes(m_)
-plot_list(images=[m_],labels=[])
 
 def pad_mask(mask, pad):
     if pad <= 1:
@@ -157,6 +78,7 @@ def pad_mask(mask, pad):
 
     return mask_padded
 
+
 def crop_mask(mask, crop):
     if crop <= 1:
         crop = 2
@@ -164,30 +86,6 @@ def crop_mask(mask, crop):
     mask_cropped = mask[crop:h - crop, crop:w - crop]
     return mask_cropped
 
-# close what wasn't closed before
-area, radius = mean_blob_size(m_b)
-struct_size = int(1.25*radius)
-struct_el = morph.disk(struct_size)
-m_padded = pad_mask(m_, pad=struct_size)
-m_padded = morph.binary_closing(m_padded, selem=struct_el)
-m_ = crop_mask(m_padded, crop=struct_size)
-plot_list(images=[m_],labels=[])
-
-m_ = np.where(c_b & (~m_b), 0, m_)
-plot_list(images=[m_],labels=[])
-
-area, radius = mean_blob_size(m_b)
-struct_size = int(0.75*radius)
-struct_el = morph.disk(struct_size)
-m_padded = pad_mask(m_, pad=struct_size)
-m_padded = morph.binary_opening(m_padded, selem=struct_el)
-m_ = crop_mask(m_padded, crop=struct_size)
-plot_list(images=[m_,m],labels=[t])
-
-# join the connected cells with what we had at the beginning
-m_ = np.where(m_b|m_,1,0)
-m_ = ndi.binary_fill_holes(m_)
-plot_list(images=[m_,m],labels=[t])
 
 def drop_artifacts(mask_after, mask_pre, min_coverage=0.5):
     connected, nr_connected = ndi.label(mask_after)
@@ -203,9 +101,6 @@ def drop_artifacts(mask_after, mask_pre, min_coverage=0.5):
         else:
             mask = mask + initial_space
     return mask
-
-m_ = drop_artifacts(m_, m_b,min_coverage=0.25)
-plot_list(images=[m_,m,c],labels=[t])
 
 
 def clean_mask_v2(m, c):
@@ -243,51 +138,6 @@ def clean_mask_v2(m, c):
 
     return m_
 
-m,c,t = dirty_at_border
-m_ = clean_mask_v2(m,c)
-
-plot_list(images = [m,c,m_],
-          labels = [t]
-         )
-
-for idx in range(5):
-    print(idx)
-    mask = masks[idx]
-    contour = contours[idx]
-    cleaned_mask = clean_mask_v2(mask, contour)
-    gt = ground_truth[idx]
-
-    plot_list(images=[mask, contour, cleaned_mask], labels=[gt])
-
-
-
-## Problem 3 not everything gets filled
-
-for idx in [38]:
-    print(idx)
-    mask = masks[idx]
-    contour = contours[idx]
-    cleaned_mask = clean_mask_v2(mask, contour)
-    gt = ground_truth[idx]
-
-    plot_list(images=[mask, contour, cleaned_mask], labels=[gt])
-
-
-## Problem 4 some cells get connected
-
-for idx in [0]:
-    print(idx)
-    mask = masks[idx]
-    contour = contours[idx]
-    cleaned_mask = clean_mask_v2(mask, contour)
-    gt = ground_truth[idx]
-
-    plot_list(images=[mask, contour, cleaned_mask], labels=[gt])
-
-
-## Approach v1
-## In this approach we will simply cut the masks with the contours and use that as markers.
-## Simple but really effective.
 
 def good_markers_v1(m, c):
     # threshold
@@ -298,23 +148,6 @@ def good_markers_v1(m, c):
     return mk_
 
 
-for idx in range(5):
-    print(idx)
-    mask = masks[idx]
-    contour = contours[idx]
-    cleaned_mask = clean_mask_v2(mask, contour)
-    good_markers = good_markers_v1(mask, contour)
-    gt = ground_truth[idx]
-
-    plot_list(images=[mask, contour, cleaned_mask, good_markers], labels=[gt])
-
-
-
-
-## Problem 1 building markers on initial mask when we have better mask
-## There is no point in using initial masks when we worked so hard on making them better right?
-## Let's use our results from the first step
-
 def good_markers_v2(m_b, c):
     # threshold
     c_thresh = threshold_otsu(c)
@@ -322,43 +155,6 @@ def good_markers_v2(m_b, c):
 
     mk_ = np.where(c_b, 0, m_b)
     return mk_
-
-
-for idx in range(5):
-    print(idx)
-    mask = masks[idx]
-    contour = contours[idx]
-    cleaned_mask = clean_mask_v2(mask, contour)
-    good_markers = good_markers_v2(cleaned_mask, contour)
-    gt = ground_truth[idx]
-
-    plot_list(images=[mask, contour, cleaned_mask, good_markers], labels=[gt])
-
-
-
-## Problem 2 some markers are to large and connected
-## Unfortunately it is not perfect. If we have to connected cells and we have one connected marker
-## for those cells watershed will not detach it. We need to make them better,
-## smaller and positioned more in the center of nuceli.
-
-m,c,t = dirty
-
-cleaned_mask = clean_mask_v2(m, c)
-
-c_b = c > threshold_otsu(c)
-mk_ = np.where(c_b,0,cleaned_mask)
-plot_list(images=[m,c,mk_],labels=[])
-
-area, radius = mean_blob_size(m_b)
-struct_size = int(0.25*radius)
-struct_el = morph.disk(struct_size)
-m_padded = pad_mask(mk_, pad=struct_size)
-m_padded = morph.erosion(m_padded, selem=struct_el)
-mk_ = crop_mask(m_padded, crop=struct_size)
-plot_list(images=[m,c,mk_],labels=[])
-
-mk_,_ = ndi.label(mk_)
-plot_list(images=[cleaned_mask],labels=[mk_, t])
 
 
 def good_markers_v3(m_b, c):
@@ -377,60 +173,12 @@ def good_markers_v3(m_b, c):
     return mk_
 
 
-for idx in range(5):
-    print(idx)
-    mask = masks[idx]
-    contour = contours[idx]
-    cleaned_mask = clean_mask_v2(mask, contour)
-    good_markers = good_markers_v3(cleaned_mask, contour)
-    gt = ground_truth[idx]
-
-    plot_list(images=[mask, contour, cleaned_mask], labels=[good_markers, gt])
-
-
-
-## Problem 3 still some barely connected markers are left
-## Unfortunately for some images the markers are not eroded enough and are left connected (look at the orange blob at the bottom right corner in the forth column).
-## Some tweaking should improve it but beware that for other images it might decrease the score.
-
-for idx in [25, 27]:
-    print(idx)
-    mask = masks[idx]
-    contour = contours[idx]
-    cleaned_mask = clean_mask_v2(mask, contour)
-    good_markers = good_markers_v3(cleaned_mask, contour)
-    gt = ground_truth[idx]
-
-    plot_list(images=[mask, contour, cleaned_mask], labels=[good_markers, gt])
-
-
-
 ## Problem 4 we are dropping markers on many images with small cells
 ## Good distance
-
-def good_markers_v4(m_b,c):
-    return
-
 def good_distance_v1(m_b):
     distance = ndi.distance_transform_edt(m_b)
     return distance
 
-
-for idx in range(5):
-    print(idx)
-    mask = masks[idx]
-    contour = contours[idx]
-    cleaned_mask = clean_mask_v2(mask, contour)
-    good_markers = good_markers_v3(cleaned_mask, contour)
-    good_distance = good_distance_v1(cleaned_mask)
-    gt = ground_truth[idx]
-
-    plot_list(images=[cleaned_mask, good_distance], labels=[good_markers, gt])
-
-
-
-
-## Watershed
 
 def watershed_v1(mask, contour):
     cleaned_mask = clean_mask_v2(mask, contour)
@@ -440,23 +188,6 @@ def watershed_v1(mask, contour):
     water = morph.watershed(-good_distance, good_markers, mask=cleaned_mask)
 
     return water
-
-
-for idx in range(5):
-    print(idx)
-    mask = masks[idx]
-    contour = contours[idx]
-    cleaned_mask = clean_mask_v2(mask, contour)
-    good_markers = good_markers_v3(cleaned_mask, contour)
-    good_distance = good_distance_v1(cleaned_mask)
-
-    water = watershed_v1(mask, contour)
-
-    gt = ground_truth[idx]
-
-    plot_list(images=[cleaned_mask, good_distance], labels=[good_markers, water, gt])
-
-
 
 
 def add_dropped_water_blobs(water, mask_cleaned):
@@ -493,30 +224,6 @@ def watershed_v2(mask, contour):
     return water
 
 
-
-for idx in range(5):
-    print(idx)
-    mask = masks[idx]
-    contour = contours[idx]
-    cleaned_mask = clean_mask_v2(mask, contour)
-    good_markers = good_markers_v3(cleaned_mask, contour)
-    good_distance = good_distance_v1(cleaned_mask)
-
-    water = watershed_v2(mask, contour)
-
-    gt = ground_truth[idx]
-
-    plot_list(images=[cleaned_mask, good_distance], labels=[good_markers, water, gt])
-
-
-
-
-
-
-
-
-from itertools import product
-
 def relabel(img):
     h, w = img.shape
 
@@ -531,9 +238,11 @@ def relabel(img):
         img[i, j] = relabel_dict[img[i, j]]
     return img
 
+
 def drop_small(img, min_size):
     img = morph.remove_small_objects(img, min_size=min_size)
     return relabel(img)
+
 
 def fill_holes_per_blob(image):
     image_cleaned = np.zeros_like(image)
@@ -563,25 +272,335 @@ def watershed_v3(mask, contour):
     return labels
 
 
-for idx in range(5):
-    print(idx)
-    mask = masks[idx]
-    contour = contours[idx]
-    cleaned_mask = clean_mask_v2(mask, contour)
-    good_markers = good_markers_v3(cleaned_mask, contour)
-    good_distance = good_distance_v1(cleaned_mask)
 
-    water = watershed_v3(mask, contour)
+def main(_):
+    ground_truth = get_ground_truth(images_dir='../../../dl_data/nucleus',
+                                    subdir_name='stage1_train',
+                                    target_dir='../../../dl_data/nucleus/ground_truth/')
 
-    gt = ground_truth[idx]
+    contours = overlay_contours(images_dir='../../../dl_data/nucleus',
+                                subdir_name='stage1_train',
+                                target_dir='../../../dl_data/nucleus/contours_touching_overlayed/')
 
-    plot_list(images=[cleaned_mask, good_distance], labels=[good_markers, water, gt])
+    masks = overlay_masks(images_dir='../../../dl_data/nucleus',
+                          subdir_name='stage1_train',
+                          target_dir='../../../dl_data/nucleus/mask_overlayed/')
 
 
-test_masks = joblib.load('../../../dl_data/nucleus/test_masks.pkl')
+    ############################
+    # Problem 1 -> dirty masks
+    ############################
+    idx = 5
+    dirty = masks[idx], contours[idx], ground_truth[idx]
+    plot_list(images=[dirty[0], dirty[1]],
+              labels=[dirty[2]])
 
-from skimage.color import label2rgb
+    #################################
+    # Problem 2 -> dirty at border
+    #################################
+    idx = 44
+    dirty_at_border = masks[idx], contours[idx], ground_truth[idx]
+    plot_list(images=[dirty_at_border[0], dirty_at_border[1]],
+              labels=[dirty_at_border[2]])
 
-for mask in test_masks[:5]:
-    plt.imshow(label2rgb(mask))
-    plt.show()
+    ################
+    # Approach V1
+    ################
+    m, c, t = dirty
+
+    ########################################################################
+    #  Let's put it all together in a function - def clean_mask_v1(m,c)
+    #
+    #  m, c, t = dirty
+    #  m_ = clean_mask_v1(m,c)
+    #  plot_list(images = [m,c,m_], labels = [t])
+    #
+    ########################################################################
+    # let's proceed to cleaning.
+    # First we binarize both the mask and contours using global, otsu thresholding method:
+    m_b = m > threshold_otsu(m)
+    c_b = c > threshold_otsu(c)
+    plot_list(images=[m_b, c_b], labels=[])
+
+    # combine binarized masks and contours
+    m_ = np.where(m_b | c_b, 1, 0)
+    plot_list(images=[m_], labels=[])
+
+    # fill the holes that remained
+    m_ = ndi.binary_fill_holes(m_)
+    plot_list(images=[m_], labels=[])
+
+    # Now that we filled the holes in the cells we can detach them again because we have the contour information
+    m_ = np.where(c_b & (~m_b), 0, m_)
+    plot_list(images=[m_], labels=[])
+
+    # We are left with artifacts. Let's use binary_openning to drop them.
+    area, radius = mean_blob_size(m_b)
+    m_ = morph.binary_opening(m_, selem=morph.disk(0.25 * radius))
+    plot_list(images=[m_], labels=[])
+
+
+
+    # It works to a certain extend but it removes things that
+    # where not connected and/or things around borders
+
+    ################
+    # Approach V2
+    ################
+    # Let's start by binarizing and filling the holes again
+    m, c, t = dirty_at_border
+
+    ########################################################################
+    #  Let's put it all together in one function - def clean_mask_v2(m,c)
+    #
+    #  m,c,t = dirty_at_border
+    #  m_ = clean_mask_v2(m,c)
+    #
+    #  plot_list(images = [m,c,m_], labels = [t])
+    #
+    ########################################################################
+
+    # threshold
+    m_b = m > threshold_otsu(m)
+    c_b = c > threshold_otsu(c)
+
+    # combine contours and masks and fill the cells
+    m_ = np.where(m_b | c_b, 1, 0)
+    m_ = ndi.binary_fill_holes(m_)
+    plot_list(images=[m_], labels=[])
+
+
+    # Now we will use binary_closing to fill what wasn't closed with fill holes.
+    # We will need two helper functions pad_mask and crop_mask to deal with problems around the edges
+
+    # close what wasn't closed before
+    area, radius = mean_blob_size(m_b)
+    struct_size = int(1.25 * radius)
+    struct_el = morph.disk(struct_size)
+    m_padded = pad_mask(m_, pad=struct_size)
+    m_padded = morph.binary_closing(m_padded, selem=struct_el)
+    m_ = crop_mask(m_padded, crop=struct_size)
+    plot_list(images=[m_], labels=[])
+
+    # we closed everything but it is way more than we wanted.
+    # Let's now cut it with our contours and see what we get
+    m_ = np.where(c_b & (~m_b), 0, m_)
+    plot_list(images=[m_], labels=[])
+
+    # we can use binary_openning with a larger structural element. Let's try that
+    area, radius = mean_blob_size(m_b)
+    struct_size = int(0.75 * radius)
+    struct_el = morph.disk(struct_size)
+    m_padded = pad_mask(m_, pad=struct_size)
+    m_padded = morph.binary_opening(m_padded, selem=struct_el)
+    m_ = crop_mask(m_padded, crop=struct_size)
+    plot_list(images=[m_, m], labels=[t])
+
+    # join the connected cells with what we had at the beginning
+    m_ = np.where(m_b | m_, 1, 0)
+    m_ = ndi.binary_fill_holes(m_)
+    plot_list(images=[m_, m], labels=[t])
+
+    m_ = drop_artifacts(m_, m_b, min_coverage=0.25)
+    plot_list(images=[m_, m, c], labels=[t])
+
+
+    ############################################
+    # Problem 3 -> not everything gets filled
+    ############################################
+
+    ############################################
+    # Problem 4 -> some cells get connected
+    #
+    # Ideas:
+    # - work more with dilation
+    # - do better around borders
+    # - drop some cells after watershed with drop_artifact function
+    #
+    # TODO: clean_mask_V3 would be dev...
+    # Go ahead and try to improve it. The floor is yours
+    #
+    # def clean_mask_v3(m,c):
+    #     return
+    #
+    ############################################
+
+
+    ###################
+    # Good Markers
+    ###################
+    # In this approach we will simply cut the masks with the contours and use that as markers.
+    # Simple but really effective.
+    for idx in range(5):
+        print(idx)
+        mask = masks[idx]
+        contour = contours[idx]
+        cleaned_mask = clean_mask_v2(mask, contour)
+        good_markers = good_markers_v1(mask, contour)
+        gt = ground_truth[idx]
+
+        plot_list(images=[mask, contour, cleaned_mask, good_markers], labels=[gt])
+
+    # Problem 1 -> building markers on initial mask when we have better mask
+    for idx in range(5):
+        print(idx)
+        mask = masks[idx]
+        contour = contours[idx]
+        cleaned_mask = clean_mask_v2(mask, contour)
+        good_markers = good_markers_v2(cleaned_mask, contour)
+        gt = ground_truth[idx]
+
+        plot_list(images=[mask, contour, cleaned_mask, good_markers], labels=[gt])
+
+    # Problem 2 some markers are to large and connected
+    m, c, t = dirty
+    cleaned_mask = clean_mask_v2(m, c)
+    c_b = c > threshold_otsu(c)
+    mk_ = np.where(c_b, 0, cleaned_mask)
+    plot_list(images=[m, c, mk_], labels=[])
+
+    # For instance the two markers at the top left are still connected and will be treated
+    # as a single marker by the watershed And nowe lets erode the markers
+    area, radius = mean_blob_size(m_b)
+    struct_size = int(0.25 * radius)
+    struct_el = morph.disk(struct_size)
+    m_padded = pad_mask(mk_, pad=struct_size)
+    m_padded = morph.erosion(m_padded, selem=struct_el)
+    mk_ = crop_mask(m_padded, crop=struct_size)
+    plot_list(images=[m, c, mk_], labels=[])
+
+    # we now compare those markers with the labels we get the following
+    mk_, _ = ndi.label(mk_)
+    plot_list(images=[cleaned_mask], labels=[mk_, t])
+
+
+    #########################################################
+    # So the markers and cleaned mask look really good!
+    #########################################################
+    for idx in range(5):
+        print(idx)
+        mask = masks[idx]
+        contour = contours[idx]
+        cleaned_mask = clean_mask_v2(mask, contour)
+        good_markers = good_markers_v3(cleaned_mask, contour)
+        gt = ground_truth[idx]
+
+        plot_list(images=[mask, contour, cleaned_mask], labels=[good_markers, gt])
+
+
+
+    # Problem 3 -> still some barely connected markers are left¶
+    for idx in [25, 27]:
+        print(idx)
+        mask = masks[idx]
+        contour = contours[idx]
+        cleaned_mask = clean_mask_v2(mask, contour)
+        good_markers = good_markers_v3(cleaned_mask, contour)
+        gt = ground_truth[idx]
+
+        plot_list(images=[mask, contour, cleaned_mask], labels=[good_markers, gt])
+
+    #########################################################################
+    # Problem 4 -> we are dropping markers on many images with small cells
+    #
+    # Ideas
+    # - play with binary closing/opening
+    # - involve contours and/or centers in this
+    # - we will asume that lost markers are in facet small cells that don't need to be divided and
+    #   we will get back all the cells that were dropped in watershed
+    # - use local maxima on distance transform
+    #
+    # TODO: need to be dev...
+    # def good_markers_v4(m_b,c):
+    #     return
+    #
+    #########################################################################
+
+    #####################
+    # Good distance
+    #####################
+    # Here I have no better idea than to use the binary distance from the background.
+    # Feel free to improve on that!
+    #
+    # Idea
+    # - investigate imposing some gradients on original image or good clean mask
+    #
+    for idx in range(5):
+        print(idx)
+        mask = masks[idx]
+        contour = contours[idx]
+        cleaned_mask = clean_mask_v2(mask, contour)
+        good_markers = good_markers_v3(cleaned_mask, contour)
+        good_distance = good_distance_v1(cleaned_mask)
+        gt = ground_truth[idx]
+
+        plot_list(images=[cleaned_mask, good_distance], labels=[good_markers, gt])
+
+
+    ########################
+    # Watershed
+    ########################
+    for idx in range(5):
+        print(idx)
+        mask = masks[idx]
+        contour = contours[idx]
+        cleaned_mask = clean_mask_v2(mask, contour)
+        good_markers = good_markers_v3(cleaned_mask, contour)
+        good_distance = good_distance_v1(cleaned_mask)
+
+        water = watershed_v1(mask, contour)
+
+        gt = ground_truth[idx]
+
+        plot_list(images=[cleaned_mask, good_distance], labels=[good_markers, water, gt])
+
+
+    # Problem 1 -> some cells are dumped
+
+    # Problem 2 -> some artifacts from mask_cleaning remain
+
+
+
+
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    # parser.add_argument(
+    #     '--images_dir',
+    #     default='../../../dl_data/nucleus',
+    #     type=str,
+    #     help="Image directory")
+    #
+    # parser.add_argument(
+    #     '--subdir_name',
+    #     default='stage1_train',
+    #     type=str,
+    #     help="Sub directory name")
+    #
+    # parser.add_argument(
+    #     '--target_dir',
+    #     default='stage1_train',
+    #     type=str,
+    #     help="Sub directory name")
+
+    parser.add_argument(
+        '--img_size',
+        type=int,
+        default=256,
+        help="Image height and width")
+
+    parser.add_argument(
+        '--aug_prefix',
+        default='_aug_',
+        type=str,
+        help="prefix name of augmentation")
+
+    parser.add_argument(
+        '--aug_count',
+        type=int,
+        default=2,
+        help="Count of augmentation")
+
+    FLAGS, unparsed = parser.parse_known_args()
+    tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
