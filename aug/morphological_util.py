@@ -4,7 +4,6 @@ import os
 import cv2
 import numpy as np
 import scipy.ndimage as ndi
-import torch
 from PIL import Image
 from imageio import imwrite
 from skimage.transform import resize
