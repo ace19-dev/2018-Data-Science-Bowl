@@ -10,7 +10,6 @@ from skimage.transform import resize
 from sklearn.cluster import KMeans
 import skimage.morphology  # For using image labeling
 
-from torchvision import models
 from tqdm import tqdm
 
 

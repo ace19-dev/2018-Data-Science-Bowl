@@ -1,12 +1,11 @@
 import os
 
-import ipywidgets as ipy
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.externals import joblib
 import cv2
-import morphological_util as mp
+from aug import morphological_util as mp
 
 #masks, contours, ground_truth = joblib.load('../../../dl_data/nucleus/masks_contours_ground_truth_train.pkl')
 ground_truth = mp.get_ground_truth(images_dir='/home/hong/dl_data/nucleus', subdir_name='stage1_train', target_dir='/home/hong/dl_data/nucleus/ground_truth/')
