@@ -185,7 +185,9 @@ def main(_):
     # (the area of intersection)
     # --------------------------
     # (the area of two boxes)
-    loss = -IOU(pred, GT)
+    iou_op = IOU(pred, GT)
+
+    loss = -iou_op
     tf.summary.scalar("loss", loss)
 
     # Updates moving mean and moving variance for BatchNorm (train/inference)
@@ -270,7 +272,7 @@ def main(_):
         for step in range(tr_batches_per_epoch):
             X_train, y_train = sess.run(next_batch)
             train_summary, accuracy, _, _ = \
-                sess.run([summary_op, loss, train_op, increment_global_step],
+                sess.run([summary_op, iou_op, train_op, increment_global_step],
                          feed_dict={X: X_train,
                                     GT: y_train,
                                     mode: True}
@@ -287,7 +289,7 @@ def main(_):
         for n in range(val_batches_per_epoch):
             X_val, y_val = sess.run(next_batch)
             val_summary, val_accuracy = \
-                sess.run([summary_op, loss],
+                sess.run([summary_op, iou_op],
                          feed_dict={X: X_val,
                                     GT: y_val,
                                     mode: False}
