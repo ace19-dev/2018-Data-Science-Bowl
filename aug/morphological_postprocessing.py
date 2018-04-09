@@ -510,7 +510,7 @@ def main(_):
     #   we will get back all the cells that were dropped in watershed
     # - use local maxima on distance transform
     #
-    # TODO: need to be dev...
+    # TODO: good_markers_v4 need to be dev...
     # def good_markers_v4(m_b,c):
     #     return
     #
@@ -558,6 +558,43 @@ def main(_):
     # Problem 1 -> some cells are dumped
 
     # Problem 2 -> some artifacts from mask_cleaning remain
+    # Unfortunatelly some cells are dropped, some cells are oversegmented and
+    # some artifacts from the mask cleaning still remain.
+    # The good thing is we can deal with some of those problems by using ideas we have already tried.
+    for idx in range(5):
+        print(idx)
+        mask = masks[idx]
+        contour = contours[idx]
+        cleaned_mask = clean_mask_v2(mask, contour)
+        good_markers = good_markers_v3(cleaned_mask, contour)
+        good_distance = good_distance_v1(cleaned_mask)
+
+        water = watershed_v2(mask, contour)
+
+        gt = ground_truth[idx]
+
+        plot_list(images=[cleaned_mask, good_distance], labels=[good_markers, water, gt])
+
+
+    # Problem 3 -> some cells are oversemgmented and small cell chunks remain
+    # Now some small pieces of cells may remain at this point or the cells could get oversegmented.
+    # We will deal with that by dropping to small to be a cell blobs.
+    for idx in range(5):
+        print(idx)
+        mask = masks[idx]
+        contour = contours[idx]
+        cleaned_mask = clean_mask_v2(mask, contour)
+        good_markers = good_markers_v3(cleaned_mask, contour)
+        good_distance = good_distance_v1(cleaned_mask)
+
+        water = watershed_v3(mask, contour)
+
+        gt = ground_truth[idx]
+
+        plot_list(images=[cleaned_mask, good_distance], labels=[good_markers, water, gt])
+
+
+
 
 
 
