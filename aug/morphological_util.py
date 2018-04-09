@@ -98,21 +98,3 @@ def get_ground_truth(images_dir, subdir_name, target_dir):
         groud_truth.append(lab_mask)
 
     return groud_truth
-
-def preprocess_image(img, target_size=(128, 128)):
-    img = resize(img, target_size, mode='constant')
-    x = np.expand_dims(img, axis=0)
-    x = x.transpose(0, 3, 1, 2)
-    x = torch.FloatTensor(x)
-    if torch.cuda.is_available():
-        x = torch.autograd.Variable(x, volatile=True).cuda()
-    else:
-        x = torch.autograd.Variable(x, volatile=True)
-    return x
-
-
-def cluster_features(features, n_clusters=10):
-    kmeans = KMeans(n_clusters=n_clusters, random_state=1111)
-    kmeans.fit(features)
-    labels = kmeans.labels_
-    return labels
