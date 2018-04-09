@@ -272,7 +272,6 @@ if __name__ == '__main__':
     parser.add_argument(
         '--data_dir',
         default='../../dl_data/nucleus/stage1_train',
-        # default='../../dl_data/nucleus/stage1_train_670',
         type=str,
         help="Data directory")
 
@@ -290,7 +289,7 @@ if __name__ == '__main__':
 
     parser.add_argument(
         '--batch_size',
-        default=24,
+        default=16,
         type=int,
         help="Batch size")
 
@@ -329,7 +328,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--img_size',
         type=int,
-        default=512,
+        default=256,
         help="Image height and width")
 
     parser.add_argument(
