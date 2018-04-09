@@ -5,8 +5,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.externals import joblib
+import cv2
+import morphological_postproc as mp
 
-masks, contours, ground_truth = joblib.load('../input/morphologicalpostprocessing/masks_contours_ground_truth_train.pkl')
+#masks, contours, ground_truth = joblib.load('../../../dl_data/nucleus/masks_contours_ground_truth_train.pkl')
+ground_truth = mp.get_ground_truth(images_dir='/home/hong/dl_data/nucleus', subdir_name='stage1_train', target_dir='/home/hong/dl_data/nucleus/ground_truth/')
+contours = mp.overlay_contours(images_dir='/home/hong/dl_data/nucleus', subdir_name='stage1_train', target_dir='/home/hong/dl_data/nucleus/contours_touching_overlayed/')
+masks = mp.overlay_masks(images_dir='/home/hong/dl_data/nucleus', subdir_name='stage1_train', target_dir='/home/hong/dl_data/nucleus/mask_overlayed/')
+
 
 def plot_list(images, labels):
     n_img = len(images)
@@ -573,7 +579,7 @@ for idx in range(5):
     plot_list(images=[cleaned_mask, good_distance], labels=[good_markers, water, gt])
 
 
-test_masks = joblib.load('../input/test-predictions/test_masks.pkl')
+test_masks = joblib.load('../../../dl_data/nucleus/test_masks.pkl')
 
 from skimage.color import label2rgb
 
