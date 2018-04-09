@@ -12,7 +12,7 @@ import tensorflow as tf
 # For using image generation
 from keras.preprocessing.image import ImageDataGenerator, img_to_array, load_img
 
-from utils.data_oper \
+from utils.oper_utils2 \
     import normalize_imgs, trsf_proba_to_binary, \
             normalize_masks, imgs_to_grayscale, invert_imgs
 
