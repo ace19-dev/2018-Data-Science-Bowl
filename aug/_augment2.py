@@ -9,20 +9,32 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 
-# For using image generation
-from keras.preprocessing.image import ImageDataGenerator, img_to_array, load_img
-
-from utils.data_oper \
-    import normalize_imgs, trsf_proba_to_binary, \
-            normalize_masks, imgs_to_grayscale, invert_imgs
-
 from utils.image_utils import read_image, read_mask
+from tqdm import tqdm
 
 
 # RANDOM_SEED = 777
 
 FLAGS = None
 
+def read_images_and_gt_masks () :
+    train_ids = next(os.walk(FLAGS.train_dir))[1]
+    x_train = []
+    masks = []
+
+    for n, id_ in tqdm(enumerate(train_ids), total=len(train_ids)):
+        path = FLAGS.train_dir + id_
+        # image_ = cv2.imread(path + '/images/' + id_ + '.png')
+        image_ = read_image(path + '/images/' + id_ + '.png', target_size=(256, 256))
+        mask_ = read_image(path + '/gt_mask/' + id_ + '.png', target_size=(256, 256))
+
+        x_train.append(image_)
+        masks.append(mask_)
+
+    x_train = np.array(x_train)
+    masks = np.array(masks)
+
+    return x_train, masks
 
 def read_train_data_properties(train_dir):
     """Read basic properties of training images and masks"""
@@ -94,30 +106,79 @@ def load_raw_data(train_df, test_df, target_size=None):
     return x_train, y_train, x_test
 
 
+def normalize(data, type_=1):
+    """Normalize data."""
+    if type_ == 0:
+        # Convert pixel values from [0:255] to [0:1] by global factor
+        data = data.astype(np.float32) / data.max()
+    if type_ == 1:
+        # Convert pixel values from [0:255] to [0:1] by local factor
+        div = data.max(axis=tuple(np.arange(1, len(data.shape))), keepdims=True)
+        div[div < 0.01 * data.mean()] = 1.  # protect against too small pixel intensities
+        data = data.astype(np.float32) / div
+    if type_ == 2:
+        # Standardisation of each image
+        data = data.astype(np.float32) / data.max()
+        mean = data.mean(axis=tuple(np.arange(1, len(data.shape))), keepdims=True)
+        std = data.std(axis=tuple(np.arange(1, len(data.shape))), keepdims=True)
+        data = (data - mean) / std
+
+    return data
+
+
+def normalize_imgs(data):
+    """Normalize images."""
+    return normalize(data, type_=1)
+
+
+def invert_imgs(imgs, cutoff=.5):
+    '''Invert image if mean value is greater than cutoff.'''
+    imgs = np.array(list(map(lambda x: 1. - x if np.mean(x) > cutoff else x, imgs)))
+    return normalize_imgs(imgs)
+
+
+def imgs_to_grayscale(imgs):
+    '''Transform RGB images into grayscale spectrum.'''
+    if imgs.shape[3] == 3:
+        imgs = normalize_imgs(np.expand_dims(np.mean(imgs, axis=3), axis=3))
+    return imgs
+
+
 # Normalize all images and masks. There is the possibility to transform images
 # into the grayscale sepctrum and to invert images which have a very
 # light background.
-def preprocess_raw_data(x_train, y_train, x_test, grayscale=False, invert=False):
+def preprocess_raw_data(x_train, grayscale=False, invert=False):
     """Preprocessing of images and masks."""
     # Normalize images and masks
     x_train = normalize_imgs(x_train)
-    y_train = trsf_proba_to_binary(normalize_masks(y_train))
-    x_test = normalize_imgs(x_test)
     print('Images normalized.')
 
     if grayscale:
         # Remove color and transform images into grayscale spectrum.
         x_train = imgs_to_grayscale(x_train)
-        x_test = imgs_to_grayscale(x_test)
         print('Images transformed into grayscale spectrum.')
 
     if invert:
         # Invert images, such that each image has a dark background.
         x_train = invert_imgs(x_train)
-        x_test = invert_imgs(x_test)
         print('Images inverted to remove light backgrounds.')
 
-    return x_train, y_train, x_test
+    return x_train
+
+
+def write_image(x_train, masks):
+    train_ids = next(os.walk(FLAGS.train_dir))[1]
+    for n, id_ in tqdm(enumerate(train_ids), total=len(train_ids)):
+        image_ = x_train[n, :, :, :]
+        mask_ = masks[n, :, :, :]
+        randomString = str(uuid.uuid4()).replace("-", "")
+
+        new_id = FLAGS.aug_prefix + randomString + id_[39:]
+        os.mkdir(FLAGS.train_dir + new_id)
+        os.mkdir(FLAGS.train_dir + new_id + '/images/')
+        os.mkdir(FLAGS.train_dir + new_id + '/gt_mask/')
+        cv2.imwrite(FLAGS.train_dir + new_id + '/images/' + new_id + '.png', image_)
+        cv2.imwrite(FLAGS.train_dir + new_id + '/gt_mask/' + new_id + '.png', mask_)
 
 
 def image_augmentation(image, mask):
@@ -154,50 +215,27 @@ def make_aug_dir():
     return _new
 
 
-# def get_image_mask(queue, augmentation=True):
-#     text_reader = tf.TextLineReader(skip_header_lines=1)
-#     _, csv_content = text_reader.read(queue)
-#
-#     image_path, mask_path = tf.decode_csv(
-#         csv_content, record_defaults=[[""], [""]])
-#
-#     image_file = tf.read_file(image_path)
-#     mask_file = tf.read_file(mask_path)
-#
-#     image = tf.image.decode_jpeg(image_file, channels=3)
-#     image.set_shape([height, width, 3])
-#     image = tf.cast(image, tf.float32)
-#
-#     mask = tf.image.decode_jpeg(mask_file, channels=1)
-#     mask.set_shape([height, width, 1])
-#     mask = tf.cast(mask, tf.float32)
-#     mask = mask / (tf.reduce_max(mask) + 1e-7)
-#
-#     if augmentation:
-#         image, mask = image_augmentation(image, mask)
-#
-#     return image, mask
-
-
 def main(_):
     train_info = read_train_data_properties(FLAGS.train_dir)
     test_info = read_test_data_properties(FLAGS.test_dir)
 
     seed = np.random.randint(10000)
 
-    x_train, y_train, x_test = load_raw_data(train_info, test_info)
-    x_train, y_train, x_test = \
-        preprocess_raw_data(x_train, y_train, x_test, invert=True)
+    # x_train, y_train, x_test = load_raw_data(train_info, test_info)
+    #x_train, y_train, x_test = \
+    #    preprocess_raw_data(x_train, y_train, x_test, invert=True)
 
+    x_train, y_train = read_images_and_gt_masks()
+    x_train = preprocess_raw_data(x_train, grayscale=False, invert=True)
 
-
+    write_image(x_train, y_train)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--train_dir',
-        default='../../../dl_data/nucleus/stage1_train',
+        default='../../../dl_data/nucleus/stage1_train/',
         type=str,
         help="Train Data directory")
 
