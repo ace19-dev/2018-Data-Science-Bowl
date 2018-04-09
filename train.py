@@ -148,32 +148,6 @@ def IOU(y_pred, y_true):
     # return tf.reduce_mean(intersection / denominator)
 
 
-def make_train_op(y_pred, y_true):
-    """Returns a training operation
-
-    Loss function = - IOU(y_pred, y_true)
-
-    IOU is
-
-        (the area of intersection)
-        --------------------------
-        (the area of two boxes)
-
-    Args:
-        y_pred (4-D Tensor): (N, H, W, 1)
-        y_true (4-D Tensor): (N, H, W, 1)
-
-    Returns:
-        train_op: minimize operation
-    """
-    loss = -IOU(y_pred, y_true)
-
-    # other optimizer will be used
-    # optim = tf.train.AdamOptimizer()
-    optim = tf.train.MomentumOptimizer(0.001, 0.99)
-    return optim.minimize(loss)
-
-
 def get_start_epoch_number(latest_check_point):
     chck = latest_check_point.split('-')
     chck.reverse()
@@ -206,14 +180,19 @@ def main(_):
     tf.summary.histogram("Predicted Mask", pred)
     tf.summary.image("Predicted Mask", pred)
 
+    # IOU is
+    #
+    # (the area of intersection)
+    # --------------------------
+    # (the area of two boxes)
+    loss = -IOU(pred, GT)
+    tf.summary.scalar("loss", loss)
+
     # Updates moving mean and moving variance for BatchNorm (train/inference)
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
     with tf.control_dependencies(update_ops):
-        train_op = make_train_op(pred, GT)
-
-    IOU_op = IOU(pred, GT)
-    # IOU_op = -IOU(pred, GT)
-    tf.summary.scalar("IOU", IOU_op)
+        # other optimizer will be used
+        train_op = tf.train.MomentumOptimizer(0.001, 0.99).minimize(loss)
 
     global_step = tf.train.get_or_create_global_step()
     increment_global_step = tf.assign(global_step, global_step + 1)
@@ -291,7 +270,7 @@ def main(_):
         for step in range(tr_batches_per_epoch):
             X_train, y_train = sess.run(next_batch)
             train_summary, accuracy, _, _ = \
-                sess.run([summary_op, IOU_op, train_op, increment_global_step],
+                sess.run([summary_op, loss, train_op, increment_global_step],
                          feed_dict={X: X_train,
                                     GT: y_train,
                                     mode: True}
@@ -308,7 +287,7 @@ def main(_):
         for n in range(val_batches_per_epoch):
             X_val, y_val = sess.run(next_batch)
             val_summary, val_accuracy = \
-                sess.run([summary_op, IOU_op],
+                sess.run([summary_op, loss],
                          feed_dict={X: X_val,
                                     GT: y_val,
                                     mode: False}
