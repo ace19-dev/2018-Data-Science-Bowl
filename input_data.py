@@ -18,7 +18,7 @@ from tensorflow.python.framework import dtypes
 from tensorflow.python.framework.ops import convert_to_tensor
 
 
-from utils.data_oper import trsf_proba_to_binary, \
+from utils.oper_utils2 import trsf_proba_to_binary, \
     imgs_to_grayscale, invert_imgs
 
 
