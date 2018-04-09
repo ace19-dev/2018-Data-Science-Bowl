@@ -48,6 +48,76 @@ FLAGS = None
 from utils.checkmate import BestCheckpointSaver
 
 
+def IOU2(y_pred_labeled, y_true_labeled):
+    """Compute non-zero intersections over unions."""
+    # Array of different objects and occupied area.
+    (true_labels, true_areas) = np.unique(y_true_labeled, return_counts=True)
+    (pred_labels, pred_areas) = np.unique(y_pred_labeled, return_counts=True)
+
+    # Number of different labels.
+    n_true_labels = len(true_labels)
+    n_pred_labels = len(pred_labels)
+
+    # Each mask has at least one identified object.
+    if (n_true_labels > 1) and (n_pred_labels > 1):
+
+        # Compute all intersections between the objects.
+        all_intersections = np.zeros((n_true_labels, n_pred_labels))
+        for i in range(y_true_labeled.shape[0]):
+            for j in range(y_true_labeled.shape[1]):
+                m = y_true_labeled[i, j]
+                n = y_pred_labeled[i, j]
+                all_intersections[m, n] += 1
+
+                # Assign predicted to true background.
+        assigned = [[0, 0]]
+        tmp = all_intersections.copy()
+        tmp[0, :] = -1
+        tmp[:, 0] = -1
+
+        # Assign predicted to true objects if they have any overlap.
+        for i in range(1, np.min([n_true_labels, n_pred_labels])):
+            mn = list(np.unravel_index(np.argmax(tmp), (n_true_labels, n_pred_labels)))
+            if all_intersections[mn[0], mn[1]] > 0:
+                assigned.append(mn)
+            tmp[mn[0], :] = -1
+            tmp[:, mn[1]] = -1
+        assigned = np.array(assigned)
+
+        # Intersections over unions.
+        intersection = np.array([all_intersections[m, n] for m, n in assigned])
+        union = np.array([(true_areas[m] + pred_areas[n] - all_intersections[m, n])
+                          for m, n in assigned])
+        iou = intersection / union
+
+        # Remove background.
+        iou = iou[1:]
+        assigned = assigned[1:]
+        true_labels = true_labels[1:]
+        pred_labels = pred_labels[1:]
+
+        # Labels that are not assigned.
+        true_not_assigned = np.setdiff1d(true_labels, assigned[:, 0])
+        pred_not_assigned = np.setdiff1d(pred_labels, assigned[:, 1])
+
+    else:
+        # in case that no object is identified in one of the masks
+        iou = np.array([])
+        assigned = np.array([])
+        true_labels = true_labels[1:]
+        pred_labels = pred_labels[1:]
+        true_not_assigned = true_labels
+        pred_not_assigned = pred_labels
+
+    # Returning parameters.
+    # params = {'iou': iou, 'assigned': assigned, 'true_not_assigned': true_not_assigned,
+    #           'pred_not_assigned': pred_not_assigned, 'true_labels': true_labels,
+    #           'pred_labels': pred_labels}
+    # return params
+
+    return iou
+
+
 def IOU(y_pred, y_true):
     """Returns a (approx) batch_norm_wrapper score
 
@@ -284,12 +354,12 @@ if __name__ == '__main__':
     parser.add_argument(
         '--epochs',
         type=int,
-        default=30,
+        default=20,
         help='Number of epochs')
 
     parser.add_argument(
         '--batch_size',
-        default=16,
+        default=32,
         type=int,
         help="Batch size")
 
@@ -334,7 +404,6 @@ if __name__ == '__main__':
     parser.add_argument(
         '--gpu_index',
         type=str,
-        # default='0',
         default=None,
         help="Set the gpu index. If you not sepcify then auto")
 
