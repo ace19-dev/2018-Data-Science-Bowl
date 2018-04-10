@@ -54,7 +54,7 @@ gain access to unique data sets to develop algorithms that address a specific ch
 
 
 ## Quick Start
-- Firstly, you can make ground truth mask.
+- Firstly, you can make ground truth mask and other script.
   - python make_ground_truth.py
   - python aug/elastic_tran.py
   - python aug/augment.py
