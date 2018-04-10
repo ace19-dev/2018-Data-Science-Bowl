@@ -56,8 +56,6 @@ def main(_):
         if not os.path.exists(gt_path):
             os.makedirs(gt_path)
 
-        #print(data)
-
         #imshow(np.squeeze(countour))
         #plt.show()
 

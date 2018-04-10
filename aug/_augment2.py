@@ -94,7 +94,7 @@ def preprocess_raw_data(x_train, grayscale=False, invert=False):
     """Preprocessing of images and masks."""
 
     # Normalize images and masks
-    x_train = normalize_imgs(x_train)
+    # x_train = normalize_imgs(x_train)
     # print('Images normalized.')
 
     if grayscale:
