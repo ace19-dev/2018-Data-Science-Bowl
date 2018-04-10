@@ -45,6 +45,22 @@ def read_images_and_gt_masks () :
     return x_train, masks
 
 
+def read_test () :
+    test_ids = next(os.walk(FLAGS.test_dir))[1]
+    x_test = []
+
+    for n, id_ in tqdm(enumerate(test_ids), total=len(test_ids)):
+        path = FLAGS.test_dir + id_
+        image_ = read_image(path + '/images/' + id_ + '.png',
+                            target_size=(256, 256))
+
+        x_test.append(image_)
+
+    x_train = np.array(x_test)
+
+    return x_test
+
+
 def normalize(data, type_=1):
     """Normalize data."""
     if type_ == 0:
@@ -162,8 +178,10 @@ def image_augmentation(image, mask):
 def main(_):
     x_train, y_train = read_images_and_gt_masks()
     x_train = preprocess_raw_data(x_train, grayscale=True, invert=False)
-
     write_image(x_train, y_train)
+
+    x_test = read_test()
+    x_test = imgs_to_grayscale(x_test)
 
 
 if __name__ == '__main__':
