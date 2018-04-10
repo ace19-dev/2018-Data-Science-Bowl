@@ -12,8 +12,6 @@ from skimage.io import imread, imshow
 
 from utils.image_utils import read_image
 
-import tqdm
-import glob
 import cv2
 import matplotlib.pyplot as plt
 
