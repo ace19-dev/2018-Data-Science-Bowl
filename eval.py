@@ -41,7 +41,7 @@ import numpy as np
 import tensorflow as tf
 
 from nets.unet import Unet_32_512, Unet_64_1024
-from utils.data_oper import read_test_data_properties, mask_to_rle, \
+from utils.oper_utils2 import read_test_data_properties, mask_to_rle, \
                                 trsf_proba_to_binary, rle_to_mask
 from input_pred_data import Data
 from input_pred_data import DataLoader
