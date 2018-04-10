@@ -24,6 +24,7 @@ import matplotlib.pyplot as plt
 
 def get_contour(img):
     img_contour = np.zeros_like(img).astype(np.uint8)
+    # http://opencv-python.readthedocs.io/en/latest/doc/15.imageContours/imageContours.html
     _, contours, hierarchy = cv2.findContours(img.astype(np.uint8), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
     cv2.drawContours(img_contour, contours, -1, (255, 255, 255), 1)
     return img_contour
@@ -55,16 +56,28 @@ def main(_):
         if not os.path.exists(gt_path):
             os.makedirs(gt_path)
 
-        print(data)
+        #print(data)
 
         #imshow(np.squeeze(countour))
+        #plt.show()
+
+        countour_of_mask = get_contour(mask)
+        #imshow(np.squeeze(countour_of_mask))
+        #plt.show()
+
+        countour_final = countour - countour_of_mask
+        #imshow(np.squeeze(countour_final))
         #plt.show()
 
         #imshow(np.squeeze(mask))
         #plt.show()
 
+        #mask2 = mask - countour
+        #imshow(np.squeeze(mask2))
+        #plt.show()
+
         if FLAGS.use_countour:
-            mask = mask - countour
+            mask = mask - countour_final
         #imshow(np.squeeze(mask))
         #plt.show()
 
