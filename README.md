@@ -61,7 +61,7 @@ gain access to unique data sets to develop algorithms that address a specific ch
 - Second
   - python train.py
 - To eval
-  - eval.py
+  - python eval.py
 
 
 
