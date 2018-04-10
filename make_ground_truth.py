@@ -30,26 +30,6 @@ def get_contour(img):
     cv2.drawContours(img_contour, contours, -1, (255, 255, 255), 1)
     return img_contour
 
-def overlay_contours(images_dir, subdir_name, target_dir, touching_only=False):
-    train_dir = os.path.join(images_dir, subdir_name)
-    contours = []
-    for mask_dirname in tqdm(glob.glob('{}/*/masks'.format(train_dir))):
-        masks = []
-        for image_filepath in glob.glob('{}/*'.format(mask_dirname)):
-            image = np.asarray(Image.open(image_filepath))
-            image = image / 255.0
-            masks.append(get_contour(image))
-        if touching_only:
-            overlayed_masks = np.where(np.sum(masks, axis=0) > 128. + 255., 255., 0.).astype(np.uint8)
-        else:
-            overlayed_masks = np.where(np.sum(masks, axis=0) > 128., 255., 0.).astype(np.uint8)
-        #target_filepath = '/'.join(mask_dirname.replace(images_dir, target_dir).split('/')[:-1]) + '.png'
-        #os.makedirs(os.path.dirname(target_filepath), exist_ok=True)
-        #imwrite(target_filepath, overlayed_masks)
-        contours.append(overlayed_masks)
-
-    return contours
-
 def main(_):
 
     filelist = sorted(os.listdir(FLAGS.dataset_dir))
