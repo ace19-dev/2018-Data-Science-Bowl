@@ -26,7 +26,9 @@ FLAGS = None
 
 
 def plot_list(images, labels):
+
     n_img = len(images)
+    '''
     n_lab = len(labels)
     n = n_lab+n_img
     plt.figure(figsize=(12,8))
@@ -37,7 +39,7 @@ def plot_list(images, labels):
         plt.subplot(1,n,n_img+j+1)
         plt.imshow(label, cmap='nipy_spectral')
     plt.show()
-
+    '''
 
 # calculates the average size of the nuclei.
 # We will need to to choose the structural element for our postprocessing
@@ -276,17 +278,17 @@ def watershed_v3(mask, contour):
 
 
 def main(_):
-    ground_truth = get_ground_truth(images_dir='../../../dl_data/nucleus',
-                                    subdir_name='stage1_train',
-                                    target_dir='../../../dl_data/nucleus/ground_truth/')
+    ground_truth = get_ground_truth(images_dir=FLAGS.images_dir,
+                                    subdir_name=FLAGS.subdir_name,
+                                    target_dir=None)
 
-    contours = overlay_contours(images_dir='../../../dl_data/nucleus',
-                                subdir_name='stage1_train',
-                                target_dir='../../../dl_data/nucleus/contours_touching_overlayed/')
+    contours = overlay_contours(images_dir=FLAGS.images_dir,
+                                subdir_name=FLAGS.subdir_name,
+                                target_dir=None)
 
-    masks = overlay_masks(images_dir='../../../dl_data/nucleus',
-                          subdir_name='stage1_train',
-                          target_dir='../../../dl_data/nucleus/mask_overlayed/')
+    masks = overlay_masks(images_dir=FLAGS.images_dir,
+                          subdir_name=FLAGS.subdir_name,
+                          target_dir=None)
 
 
     ############################
@@ -596,7 +598,7 @@ def main(_):
         plot_list(images=[cleaned_mask, good_distance], labels=[good_markers, water, gt])
 
     idx = 0
-    train_dir = os.path.join('../../../dl_data/nucleus', 'stage1_train')
+    train_dir = os.path.join(FLAGS.images_dir, FLAGS.subdir_name)
     for filename in tqdm(glob.glob('{}/*'.format(train_dir))):
 
         imagename = filename.split("/")[-1]
@@ -611,6 +613,7 @@ def main(_):
             os.makedirs(water_path)
         img.save(os.path.join(water_path, imagename + '.png'))
 
+        '''
         cleaned_mask = clean_mask_v2(mask, contour)
         img = Image.fromarray(cleaned_mask.astype('uint8'))
         cleaned_mask_path = (filename + '/cleaned_mask/')
@@ -631,7 +634,7 @@ def main(_):
         if not os.path.exists(good_distance_path):
             os.makedirs(good_distance_path)
         img.save(os.path.join(good_distance_path, imagename + '.png'))
-
+        '''
         idx = idx + 1
 
 
@@ -641,19 +644,19 @@ def main(_):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    # parser.add_argument(
-    #     '--images_dir',
-    #     default='../../../dl_data/nucleus',
-    #     type=str,
-    #     help="Image directory")
-    #
-    # parser.add_argument(
-    #     '--subdir_name',
-    #     default='stage1_train',
-    #     type=str,
-    #     help="Sub directory name")
-    #
-    # parser.add_argument(
+    parser.add_argument(
+         '--images_dir',
+         default='../../../dl_data/nucleus',
+         type=str,
+         help="Image directory")
+
+    parser.add_argument(
+         '--subdir_name',
+         default='stage1_train',
+         type=str,
+         help="Sub directory name")
+
+    #parser.add_argument(
     #     '--target_dir',
     #     default='stage1_train',
     #     type=str,
