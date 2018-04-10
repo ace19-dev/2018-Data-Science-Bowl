@@ -56,7 +56,7 @@ def read_test () :
 
         x_test.append(image_)
 
-    x_train = np.array(x_test)
+    x_test = np.array(x_test)
 
     return x_test
 
@@ -157,7 +157,7 @@ def image_augmentation(image, mask):
     concat_image = tf.concat([image, mask], axis=-1)
 
     maybe_flipped = tf.image.random_flip_left_right(concat_image)
-    maybe_flipped = tf.image.random_flip_up_down(maybe_flipped)
+    maybe_flipped = tf.image.random_flip_up_down(concat_image)
 
     image = maybe_flipped[:, :, :-1]
     mask = maybe_flipped[:, :, -1:]
@@ -180,8 +180,8 @@ def main(_):
     x_train = preprocess_raw_data(x_train, grayscale=True, invert=False)
     write_image(x_train, y_train)
 
-    x_test = read_test()
-    x_test = imgs_to_grayscale(x_test)
+    # x_test = read_test()
+    # x_test = imgs_to_grayscale(x_test)
 
 
 if __name__ == '__main__':
@@ -212,7 +212,7 @@ if __name__ == '__main__':
 
     parser.add_argument(
         '--aug_prefix',
-        default='_gray_',
+        default='_aug_',
         type=str,
         help="prefix name of augmentation")
 
