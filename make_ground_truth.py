@@ -102,7 +102,7 @@ if __name__ == '__main__':
 
     parser.add_argument(
         '--ground_truth_folder',
-        default='gt_mask2',
+        default='gt_mask',
         type=str,
         help="ground_truth folder")
 
