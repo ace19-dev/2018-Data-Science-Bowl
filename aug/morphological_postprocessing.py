@@ -1,6 +1,8 @@
+import glob
 import os
 import sys
 import argparse
+from tqdm import tqdm
 
 from itertools import product
 import matplotlib.pyplot as plt
@@ -12,7 +14,7 @@ import skimage.morphology as morph
 from skimage.filters import threshold_otsu
 import scipy.ndimage as ndi
 from scipy.stats import itemfreq
-
+from PIL import Image
 
 from aug.morphological_util import get_ground_truth, overlay_contours, overlay_masks
 
@@ -593,8 +595,44 @@ def main(_):
 
         plot_list(images=[cleaned_mask, good_distance], labels=[good_markers, water, gt])
 
+    idx = 0
+    train_dir = os.path.join('../../../dl_data/nucleus', 'stage1_train')
+    for filename in tqdm(glob.glob('{}/*'.format(train_dir))):
 
+        imagename = filename.split("/")[-1]
 
+        mask = masks[idx]
+        contour = contours[idx]
+
+        water = watershed_v3(mask, contour)
+        img = Image.fromarray(water.astype('uint8'))
+        water_path = (filename + '/water/')
+        if not os.path.exists(water_path):
+            os.makedirs(water_path)
+        img.save(os.path.join(water_path, imagename + '.png'))
+
+        cleaned_mask = clean_mask_v2(mask, contour)
+        img = Image.fromarray(cleaned_mask.astype('uint8'))
+        cleaned_mask_path = (filename + '/cleaned_mask/')
+        if not os.path.exists(cleaned_mask_path):
+            os.makedirs(cleaned_mask_path)
+        img.save(os.path.join(cleaned_mask_path, imagename + '.png'))
+
+        good_markers = good_markers_v3(cleaned_mask, contour)
+        img = Image.fromarray(good_markers)
+        good_markers_path = (filename + '/good_markers/')
+        if not os.path.exists(good_markers_path):
+            os.makedirs(good_markers_path)
+        img.save(os.path.join(good_markers_path, imagename + '.png'))
+
+        good_distance = good_distance_v1(cleaned_mask)
+        img = Image.fromarray(good_distance.astype('uint8'))
+        good_distance_path = (filename + '/good_distance/')
+        if not os.path.exists(good_distance_path):
+            os.makedirs(good_distance_path)
+        img.save(os.path.join(good_distance_path, imagename + '.png'))
+
+        idx = idx + 1
 
 
 
