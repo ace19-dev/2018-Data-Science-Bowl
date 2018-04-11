@@ -25,9 +25,18 @@ def main(_):
         for n, id_ in tqdm(enumerate(train_ids), total=len(train_ids)):
             path = FLAGS.train_dir + id_
             image_ = cv2.imread(path + '/images/' + id_ + '.png')
+            print('image name : ', path + '/images/' + id_ + '.png')
+
             # Read Masks
             flag = False
-            for mask_file in next(os.walk(path + '/masks/'))[2]:
+            maks_list = next(os.walk(path + '/masks/'))[2]
+            print('maks size : ', len(maks_list))
+
+            if (len(maks_list) > 200):
+                continue
+
+            for mask_file in maks_list:
+
                 mask_ = cv2.imread(path + '/masks/' + mask_file)
                 if flag:
                     image = np.concatenate((image, mask_), axis=2)
@@ -84,7 +93,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--train_dir',
-        default='../../../dl_data/nucleus/stage1_train/',
+        default='../../../dl_data/nucleus/stage1_train_reform/',
         type=str,
         help="Train Data directory")
 
@@ -97,7 +106,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--aug_count',
         type=int,
-        default=1,
+        default=3,
         help="Count of augmentation")
 
     FLAGS, unparsed = parser.parse_known_args()
