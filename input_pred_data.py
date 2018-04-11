@@ -55,6 +55,7 @@ class Data(object):
         search_path = os.path.join(self.data_dir, '*')
         for image_path in gfile.Glob(search_path):
             img = os.path.join(image_path, 'images', os.path.basename(image_path)) + '.png'
+            # img = os.path.join(image_path, 'water', os.path.basename(image_path)) + '.png'
             self.data_index['prediction'].append({'image': img})
 
 
