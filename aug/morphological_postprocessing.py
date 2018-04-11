@@ -5,18 +5,14 @@ import argparse
 from tqdm import tqdm
 
 from itertools import product
-import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
-from sklearn.externals import joblib
-import cv2
 import skimage.morphology as morph
 from skimage.filters import threshold_otsu
 import scipy.ndimage as ndi
 from scipy.stats import itemfreq
 from PIL import Image
 
-from aug.morphological_util import get_ground_truth, overlay_contours, overlay_masks
+from utils.morphological_util import get_ground_truth, overlay_contours, overlay_masks
 
 import tensorflow as tf
 
