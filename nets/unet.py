@@ -1,5 +1,6 @@
 
 import tensorflow as tf
+import numpy as np
 
 from keras.layers import Input, merge, Conv2D, MaxPooling2D, UpSampling2D, Dropout, Cropping2D
 
@@ -31,6 +32,10 @@ def _conv_conv_pool(input_,
 
     with tf.variable_scope("layer{}".format(name)):
         for i, filters in enumerate(n_filters):
+            # calculate the weight value for kernel_initializer
+            N = net.shape[1] * net.shape[2] * net.shape[3]
+            stddev = np.sqrt(2 / N.value)
+
             net = tf.layers.conv2d(
                 net,
                 filters,
@@ -38,6 +43,7 @@ def _conv_conv_pool(input_,
                 activation=None,
                 padding='same',
                 kernel_regularizer=tf.contrib.layers.l2_regularizer(L2_REG),
+                kernel_initializer=tf.truncated_normal_initializer(stddev=stddev, dtype=tf.float32),
                 name="conv_{}".format(i + 1))
             net = tf.layers.batch_normalization(
                 net, training=training, name="bn_{}".format(i + 1))
