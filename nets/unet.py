@@ -41,7 +41,7 @@ def _conv_conv_pool(input_,
                 filters,
                 (3, 3),
                 activation=None,
-                padding='same',
+                padding=flags.conv_padding,     # 'valid' or 'same'
                 kernel_regularizer=tf.contrib.layers.l2_regularizer(L2_REG),
                 kernel_initializer=tf.truncated_normal_initializer(stddev=stddev, dtype=tf.float32),
                 name="conv_{}".format(i + 1))
@@ -58,6 +58,24 @@ def _conv_conv_pool(input_,
         return net, pool
 
 
+def _get_crop_shape(target, refer):
+    # width, the 3rd dimension
+    cw = (target.get_shape()[2] - refer.get_shape()[2]).value
+    assert (cw >= 0)
+    if cw % 2 != 0:
+        cw1, cw2 = int(cw/2), int(cw/2) + 1
+    else:
+        cw1, cw2 = int(cw/2), int(cw/2)
+    # height, the 2nd dimension
+    ch = (target.get_shape()[1] - refer.get_shape()[1]).value
+    assert (ch >= 0)
+    if ch % 2 != 0:
+        ch1, ch2 = int(ch/2), int(ch/2) + 1
+    else:
+        ch1, ch2 = int(ch/2), int(ch/2)
+    #
+    return (ch1, ch2), (cw1, cw2)
+
 def _upconv_concat(inputA, input_B, n_filter, flags, name):
     """Upsample `inputA` and concat with `input_B`
 
@@ -71,8 +89,14 @@ def _upconv_concat(inputA, input_B, n_filter, flags, name):
     """
     up_conv = _upconv_2D(inputA, n_filter, flags, name)
 
-    return tf.concat(
-        [up_conv, input_B], axis=-1, name="concat_{}".format(name))
+    # net = tf.concat(
+    #     [up_conv, input_B], axis=-1, name="concat_{}".format(name))
+
+    ch, cw = _get_crop_shape(input_B, up_conv)
+    crop_conv = Cropping2D(cropping=(ch, cw))(input_B)
+    net = tf.concat([up_conv, crop_conv], axis=-1, name="concat_{}".format(name))
+
+    return net
 
 
 def _upconv_2D(tensor, n_filter, flags, name):

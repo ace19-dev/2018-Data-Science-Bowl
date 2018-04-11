@@ -82,11 +82,12 @@ class Data(object):
 
 class DataLoader(object):
 
-    def __init__(self, data_dir, data, img_size, batch_size, shuffle=True):
+    def __init__(self, data_dir, data, img_size, label_size, batch_size, shuffle=True):
 
         self.data_size = len(data)
         images, labels = self._get_data(data_dir, data)
         self.img_size = img_size
+        self.label_size = label_size
 
         # create _dataset, Creating a source
         dataset = tf.data.Dataset.from_tensor_slices((images, labels))
@@ -146,7 +147,7 @@ class DataLoader(object):
         label_string = tf.read_file(label_file)
         label_decoded = tf.image.decode_png(label_string, channels=1)
         label_resized = tf.image.resize_images(label_decoded,
-                                               [self.img_size, self.img_size],
+                                               [self.label_size, self.label_size],
                                                method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
         label = tf.image.convert_image_dtype(label_resized, dtype=tf.float32)
         # Finally, rescale to [-1,1] instead of [0, 1)

@@ -95,7 +95,7 @@ def main(_):
 
     tf.reset_default_graph()
     X = tf.placeholder(tf.float32, shape=[None, FLAGS.img_size, FLAGS.img_size, 3], name="X")
-    GT = tf.placeholder(tf.float32, shape=[None, FLAGS.img_size, FLAGS.img_size, 1], name="GT")
+    GT = tf.placeholder(tf.float32, shape=[None, FLAGS.label_size, FLAGS.label_size, 1], name="GT")
     mode = tf.placeholder(tf.bool, name="mode") # training or not
 
     if FLAGS.use_64_channel:
@@ -169,10 +169,12 @@ def main(_):
     tr_data = DataLoader(raw.data_dir,
                          raw.get_data('training'),
                          FLAGS.img_size,
+                         FLAGS.label_size,
                          FLAGS.batch_size)
     val_data = DataLoader(raw.data_dir,
                           raw.get_data('validation'),
                           FLAGS.img_size,
+                          FLAGS.label_size,
                           FLAGS.batch_size)
 
     iterator = tf.data.Iterator.from_structure(tr_data.dataset.output_types,
@@ -263,18 +265,6 @@ if __name__ == '__main__':
         help='What percentage of wavs to use as a validation set.')
 
     parser.add_argument(
-        '--epochs',
-        type=int,
-        default=20,
-        help='Number of epochs')
-
-    parser.add_argument(
-        '--batch_size',
-        default=32,
-        type=int,
-        help="Batch size")
-
-    parser.add_argument(
         '--logdir',
         type=str,
         default=os.getcwd() + '/models/retrain_logs',
@@ -307,22 +297,54 @@ if __name__ == '__main__':
         help="Checkpoint directory")
 
     parser.add_argument(
+        '--epochs',
+        type=int,
+        default=50,
+        help='Number of epochs')
+
+    parser.add_argument(
+        '--batch_size',
+        default=4,
+        type=int,
+        help="Batch size")
+
+    parser.add_argument(
         '--img_size',
         type=int,
-        default=256,
+        # default=256,
+        default=512,
+        # default=572,
         help="Image height and width")
 
     parser.add_argument(
-        '--gpu_index',
+        '--label_size',
+        type=int,
+        # default=256,
+        default=512,
+        # default=388,
+        help="Label height and width")
+
+    parser.add_argument(
+        '--conv_padding',
         type=str,
-        default=None,
-        help="Set the gpu index. If you not sepcify then auto")
+        default='same',
+        # default='valid',
+        help="conv padding. if your img_size is 572 and, conv_padding is valid then the label_size is 388")
 
     parser.add_argument(
         '--use_64_channel',
         type=bool,
-        default=False,
+        default=True,
+        # default=False,
         help="If you set True then use the Unet_64_1024. otherwise use the Unet_32_512")
+
+    parser.add_argument(
+        '--gpu_index',
+        type=str,
+        # default=None,
+        default='0',
+        # default='1',
+        help="Set the gpu index. If you not sepcify then auto")
 
     FLAGS, unparsed = parser.parse_known_args()
     tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
