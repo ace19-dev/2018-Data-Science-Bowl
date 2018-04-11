@@ -212,7 +212,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--checkpoint_file',
         type=str,
-        # default='unet.ckpt-50',
+        # default='unet.ckpt-20',
         default=None,
         help='checkpoint file name.')
 
@@ -241,6 +241,13 @@ if __name__ == '__main__':
         # default=True,
         default=False,
         help="If you set True then use the Unet_64_1024. otherwise use the Unet_32_512")
+
+    parser.add_argument(
+        '--conv_padding',
+        type=str,
+        default='same',
+        # default='valid',
+        help="conv padding. if your img_size is 572 and, conv_padding is valid then the label_size is 388")
 
     FLAGS, unparsed = parser.parse_known_args()
     tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
