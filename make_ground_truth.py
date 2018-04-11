@@ -15,6 +15,8 @@ from utils.image_utils import read_image
 import cv2
 import matplotlib.pyplot as plt
 
+import scipy.ndimage as ndi
+
 # def get_image_size(data):
 #     image_path = os.path.join(FLAGS.dataset_dir, data, 'images')
 #     image = os.listdir(image_path)
@@ -43,6 +45,12 @@ def main(_):
             countour = np.zeros((img_shape[0], img_shape[1], 1), dtype=np.bool)
         for mask_file in mask_images:
             _mask = imread(os.path.join(mask_path, mask_file))
+            #
+            # fill the holes that remained
+            _mask = ndi.binary_fill_holes(_mask).astype(int)
+            # Rescale to 0-255 and convert to uint8
+            _mask = (255.0 / _mask.max() * (_mask - _mask.min())).astype(np.uint8)
+            #
             _mask = np.expand_dims(_mask, axis=-1)
             mask = np.maximum(mask, _mask)
             #
@@ -55,6 +63,8 @@ def main(_):
         gt_path = os.path.join(FLAGS.ground_truth_dir, data, FLAGS.ground_truth_folder)
         if not os.path.exists(gt_path):
             os.makedirs(gt_path)
+
+        print(data)
 
         #imshow(np.squeeze(countour))
         #plt.show()
@@ -76,8 +86,8 @@ def main(_):
 
         if FLAGS.use_countour:
             mask = mask - countour_final
-        #imshow(np.squeeze(mask))
-        #plt.show()
+        # imshow(np.squeeze(mask))
+        # plt.show()
 
         mask = np.squeeze(mask)
         img = Image.fromarray(mask)
