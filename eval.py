@@ -225,7 +225,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--img_size',
         type=int,
-        default=512,
+        default=256,
         help="Image height and width")
 
     parser.add_argument(
@@ -238,8 +238,8 @@ if __name__ == '__main__':
     parser.add_argument(
         '--use_64_channel',
         type=bool,
-        default=True,
-        # default=False,
+        # default=True,
+        default=False,
         help="If you set True then use the Unet_64_1024. otherwise use the Unet_32_512")
 
     FLAGS, unparsed = parser.parse_known_args()
