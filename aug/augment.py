@@ -73,9 +73,8 @@ def main(_):
     img_gen = ImageDataGenerator(rotation_range=90.,
                                  width_shift_range=0.03,
                                  height_shift_range=0.03,
-                                 brightness_range=[1.0, 1.2],
-                                 zoom_range=0.2,
-                                 fill_mode='reflect',
+                                 brightness_range=[1.2, 1.2],
+                                 # fill_mode='reflect',
                                  horizontal_flip=True,
                                  vertical_flip=True)
 
