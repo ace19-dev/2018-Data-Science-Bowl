@@ -44,20 +44,20 @@ def read_images_and_gt_masks () :
     return x_train, masks
 
 
-def read_test () :
-    test_ids = next(os.walk(FLAGS.test_dir))[1]
-    x_test = []
-
-    for n, id_ in tqdm(enumerate(test_ids), total=len(test_ids)):
-        path = FLAGS.test_dir + id_
-        image_ = read_image(path + '/images/' + id_ + '.png',
-                            target_size=(FLAGS.img_size, FLAGS.img_size))
-
-        x_test.append(image_)
-
-    x_test = np.array(x_test)
-
-    return x_test
+# def read_test () :
+#     test_ids = next(os.walk(FLAGS.test_dir))[1]
+#     x_test = []
+#
+#     for n, id_ in tqdm(enumerate(test_ids), total=len(test_ids)):
+#         path = FLAGS.test_dir + id_
+#         image_ = read_image(path + '/images/' + id_ + '.png',
+#                             target_size=(FLAGS.img_size, FLAGS.img_size))
+#
+#         x_test.append(image_)
+#
+#     x_test = np.array(x_test)
+#
+#     return x_test
 
 
 def normalize(data, type_=1):
@@ -131,7 +131,7 @@ def write_image(x_train, masks):
         mask_ = masks[n, :, :, :]
         randomString = str(uuid.uuid4()).replace("-", "")
 
-        new_id = FLAGS.aug_prefix + randomString + id_[39:]
+        new_id = FLAGS.aug_prefix + id_[:8] + randomString
         os.mkdir(FLAGS.train_dir + new_id)
         os.mkdir(FLAGS.train_dir + new_id + '/images/')
         os.mkdir(FLAGS.train_dir + new_id + '/gt_mask/')
@@ -159,7 +159,7 @@ def image_augmentation(image, mask):
 
     # size = len(concat_image)
     # for img in range(concat_image):
-    # maybe_flipped = tf.image.random_flip_left_right(img)
+    maybe_flipped = tf.image.random_flip_left_right(concat_image)
     maybe_flipped = tf.image.random_flip_up_down(concat_image)
 
     image = maybe_flipped[:, :, :-1]
