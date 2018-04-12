@@ -16,14 +16,14 @@ from utils.oper_utils2 \
 from utils.image_utils import read_image, read_mask
 from tqdm import tqdm
 
-
-# RANDOM_SEED = 777
+RANDOM_SEED = 54989
 
 FLAGS = None
 
+
 def read_images_and_gt_masks () :
     train_ids = next(os.walk(FLAGS.train_dir))[1]
-    x_train = []
+    images = []
     masks = []
 
     for n, id_ in tqdm(enumerate(train_ids), total=len(train_ids)):
@@ -33,15 +33,16 @@ def read_images_and_gt_masks () :
         # mask_ = read_mask(path + '/masks/',
         #                   target_size=(FLAGS.img_size, FLAGS.img_size))
         mask_ = read_image(path + '/gt_mask/' + id_ + '.png',
+                           color_mode=cv2.IMREAD_GRAYSCALE,
                            target_size=(FLAGS.img_size, FLAGS.img_size))
 
-        x_train.append(image_)
-        masks.append(mask_)
+        images.append(image_)
+        masks.append(tf.expand_dims(mask_, -1))
 
-    x_train = np.array(x_train)
+    images = np.array(images)
     masks = np.array(masks)
 
-    return x_train, masks
+    return images, masks
 
 
 # def read_test () :
@@ -124,14 +125,30 @@ def preprocess_raw_data(x_train, grayscale=False, invert=False):
     return x_train
 
 
-def write_image(x_train, masks):
+def write_image(images, masks):
     train_ids = next(os.walk(FLAGS.train_dir))[1]
     for n, id_ in tqdm(enumerate(train_ids), total=len(train_ids)):
-        image_ = x_train[n, :, :, :]
+        image_ = images[n, :, :, :]
         mask_ = masks[n, :, :, :]
-        randomString = str(uuid.uuid4()).replace("-", "")
 
-        new_id = FLAGS.aug_prefix + id_[:8] + randomString
+        randomString = str(uuid.uuid4()).replace("-", "")
+        new_id = FLAGS.aug_prefix + id_[:10] + randomString
+
+        os.mkdir(FLAGS.train_dir + new_id)
+        os.mkdir(FLAGS.train_dir + new_id + '/images/')
+        os.mkdir(FLAGS.train_dir + new_id + '/gt_mask/')
+        cv2.imwrite(FLAGS.train_dir + new_id + '/images/' + new_id + '.png', image_)
+        cv2.imwrite(FLAGS.train_dir + new_id + '/gt_mask/' + new_id + '.png', mask_)
+
+def write_image2(images, masks):
+    train_ids = next(os.walk(FLAGS.train_dir))[1]
+    for n, id_ in tqdm(enumerate(train_ids), total=len(train_ids)):
+        image_ = images[n, :, :, :]
+        mask_ = masks[n, :, :, :]
+
+        randomString = str(uuid.uuid4()).replace("-", "")
+        new_id = FLAGS.aug_prefix + id_[:10] + randomString
+
         os.mkdir(FLAGS.train_dir + new_id)
         os.mkdir(FLAGS.train_dir + new_id + '/images/')
         os.mkdir(FLAGS.train_dir + new_id + '/gt_mask/')
@@ -139,7 +156,7 @@ def write_image(x_train, masks):
         cv2.imwrite(FLAGS.train_dir + new_id + '/gt_mask/' + new_id + '.png', mask_)
 
 
-def image_augmentation(image, mask):
+def image_augmentation(image, seed):
     """Returns (maybe) augmented images`
     (1) Random flip (left <--> right)
     (2) Random flip (up <--> down)
@@ -152,26 +169,14 @@ def image_augmentation(image, mask):
         image: Maybe augmented image (same shape as input `image`)
         mask: Maybe augmented mask (same shape as input `mask`)
     """
-    images = []
-    masks = []
+    maybe_flipped = tf.image.random_flip_left_right(image, seed=seed)
+    maybe_flipped = tf.image.random_flip_up_down(image, seed=seed)
 
-    concat_image = tf.concat([image, mask], axis=-1)
+    if image.shape[2] == 3:
+        image = tf.image.random_brightness(image, 0.7, seed=seed)
+        image = tf.image.random_hue(image, 0.3, seed=seed)
 
-    # size = len(concat_image)
-    # for img in range(concat_image):
-    maybe_flipped = tf.image.random_flip_left_right(concat_image)
-    maybe_flipped = tf.image.random_flip_up_down(concat_image)
-
-    image = maybe_flipped[:, :, :-1]
-    mask = maybe_flipped[:, :, -1:]
-
-    image = tf.image.random_brightness(image, 0.7)
-    image = tf.image.random_hue(image, 0.3)
-
-    # images.append(image)
-    # masks.append(mask)
-
-    return image, mask
+    return image
 
 
 # def make_aug_dir():
@@ -182,11 +187,24 @@ def image_augmentation(image, mask):
 
 
 def main(_):
-    x_train, y_train = read_images_and_gt_masks()
-    # x_train = preprocess_raw_data(x_train, grayscale=True, invert=False)
-    x_train, y_train = image_augmentation(x_train, y_train)
+    images, masks = read_images_and_gt_masks()
+    # images = preprocess_raw_data(images, grayscale=True, invert=False)
 
-    write_image(x_train, y_train)
+    image_list = []
+    mask_list = []
+    for idx, img in enumerate(images):
+        seed = np.random.randint(RANDOM_SEED)
+
+        _image = image_augmentation(images[idx], seed)
+        _mask = image_augmentation(masks[idx], seed)
+
+        image_list.append(_image)
+        mask_list.append(_mask)
+
+    images = np.array(image_list)
+    masks = np.array(mask_list)
+
+    write_image(images, masks)
 
     # x_test = read_test()
     # x_test = imgs_to_grayscale(x_test)
