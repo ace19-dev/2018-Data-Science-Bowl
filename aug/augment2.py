@@ -9,9 +9,6 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 
-# For using image generation
-from keras.preprocessing.image import ImageDataGenerator, img_to_array, load_img
-
 from utils.oper_utils2 \
     import normalize_imgs, trsf_proba_to_binary, \
             normalize_masks, imgs_to_grayscale, invert_imgs
@@ -32,9 +29,11 @@ def read_images_and_gt_masks () :
     for n, id_ in tqdm(enumerate(train_ids), total=len(train_ids)):
         path = FLAGS.train_dir + id_
         image_ = read_image(path + '/images/' + id_ + '.png',
-                            target_size=(256, 256))
+                            target_size=(FLAGS.img_size, FLAGS.img_size))
+        # mask_ = read_mask(path + '/masks/',
+        #                   target_size=(FLAGS.img_size, FLAGS.img_size))
         mask_ = read_image(path + '/gt_mask/' + id_ + '.png',
-                           target_size=(256, 256))
+                           target_size=(FLAGS.img_size, FLAGS.img_size))
 
         x_train.append(image_)
         masks.append(mask_)
@@ -52,7 +51,7 @@ def read_test () :
     for n, id_ in tqdm(enumerate(test_ids), total=len(test_ids)):
         path = FLAGS.test_dir + id_
         image_ = read_image(path + '/images/' + id_ + '.png',
-                            target_size=(256, 256))
+                            target_size=(FLAGS.img_size, FLAGS.img_size))
 
         x_test.append(image_)
 
@@ -95,7 +94,6 @@ def invert_imgs(imgs, cutoff=.5):
 
 def imgs_to_grayscale(imgs):
     # imgs = tf.reshape(imgs, [-1, 256, 256, 3])
-
     '''Transform RGB images into grayscale spectrum.'''
     if imgs.shape[3] == 3:
         # imgs = normalize_imgs(np.expand_dims(np.mean(imgs, axis=3), axis=3))
@@ -142,7 +140,7 @@ def write_image(x_train, masks):
 
 
 def image_augmentation(image, mask):
-    """Returns (maybe) augmented images
+    """Returns (maybe) augmented images`
     (1) Random flip (left <--> right)
     (2) Random flip (up <--> down)
     (3) Random brightness
@@ -154,9 +152,14 @@ def image_augmentation(image, mask):
         image: Maybe augmented image (same shape as input `image`)
         mask: Maybe augmented mask (same shape as input `mask`)
     """
+    images = []
+    masks = []
+
     concat_image = tf.concat([image, mask], axis=-1)
 
-    maybe_flipped = tf.image.random_flip_left_right(concat_image)
+    # size = len(concat_image)
+    # for img in range(concat_image):
+    # maybe_flipped = tf.image.random_flip_left_right(img)
     maybe_flipped = tf.image.random_flip_up_down(concat_image)
 
     image = maybe_flipped[:, :, :-1]
@@ -164,6 +167,9 @@ def image_augmentation(image, mask):
 
     image = tf.image.random_brightness(image, 0.7)
     image = tf.image.random_hue(image, 0.3)
+
+    # images.append(image)
+    # masks.append(mask)
 
     return image, mask
 
@@ -177,7 +183,9 @@ def image_augmentation(image, mask):
 
 def main(_):
     x_train, y_train = read_images_and_gt_masks()
-    x_train = preprocess_raw_data(x_train, grayscale=True, invert=False)
+    # x_train = preprocess_raw_data(x_train, grayscale=True, invert=False)
+    x_train, y_train = image_augmentation(x_train, y_train)
+
     write_image(x_train, y_train)
 
     # x_test = read_test()
