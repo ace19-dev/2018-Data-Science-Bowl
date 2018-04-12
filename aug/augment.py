@@ -13,10 +13,9 @@ from keras.preprocessing.image import ImageDataGenerator, img_to_array, load_img
 
 from utils.image_utils import read_image
 
-
-RANDOM_SEED = 888
-
 FLAGS = None
+
+RANDOM_SEED = 54989
 
 
 def read_train_data_properties(train_dir):
@@ -39,9 +38,9 @@ def read_train_data_properties(train_dir):
     return train_df
 
 
-def make_aug_dir():
+def make_aug_dir(prefix_name):
     randomString = str(uuid.uuid4()).replace("-", "")
-    _new = FLAGS.aug_prefix + randomString
+    _new = FLAGS.aug_prefix + prefix_name + randomString
 
     return _new
 
@@ -58,11 +57,10 @@ def generate_images(image_generator, src_path, target_dir, seed=None):
     # Generate new set of images
     batches = 1
     for batch in image_generator.flow(x,
-                        batch_size=1,
-                        shuffle=False,
-                        seed=seed,
-                        save_to_dir=target_dir,
-                        save_prefix=''):
+                                      batch_size=1,
+                                      shuffle=False,
+                                      seed=seed,
+                                      save_to_dir=target_dir):
 
         batches += 1
         if batches > 1:
@@ -70,21 +68,22 @@ def generate_images(image_generator, src_path, target_dir, seed=None):
 
 
 def main(_):
-    img_gen = ImageDataGenerator(rotation_range=90.,
-                                 width_shift_range=0.03,
-                                 height_shift_range=0.03,
-                                 brightness_range=[1.2, 1.2],
-                                 # fill_mode='reflect',
+    img_gen = ImageDataGenerator(# rotation_range=90.,
+                                 width_shift_range=0.05,
+                                 height_shift_range=0.05,
+                                 brightness_range=[1.0, 1.2],
+                                 fill_mode='reflect',
                                  horizontal_flip=True,
                                  vertical_flip=True)
 
     train_info = read_train_data_properties(FLAGS.train_dir)
 
-    seed = np.random.randint(RANDOM_SEED)
     # image_augmentation
     for i, filename in tqdm.tqdm(enumerate(train_info['image_path']), total=len(train_info)):
+        _name = os.path.basename(filename)
         for n in range(FLAGS.aug_count):
-            data_path = os.path.join(FLAGS.train_dir, make_aug_dir())
+            seed = np.random.randint(RANDOM_SEED)
+            data_path = os.path.join(FLAGS.train_dir, make_aug_dir(_name[:10]))
 
             target_img_dir = os.path.join(data_path, 'images')
             target_mask_dir = os.path.join(data_path, 'gt_mask')
