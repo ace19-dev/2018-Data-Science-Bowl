@@ -16,6 +16,7 @@ FLAGS = None
 
 def main(_):
     train_ids = next(os.walk(FLAGS.train_dir))[1]
+    train_ids.sort()
 
     print('Getting and resizing train images and masks ... ')
     sys.stdout.flush()
@@ -31,9 +32,6 @@ def main(_):
             flag = False
             maks_list = next(os.walk(path + '/masks/'))[2]
             print('maks size : ', len(maks_list))
-
-            if (len(maks_list) > 200):
-                continue
 
             for mask_file in maks_list:
 
@@ -62,7 +60,11 @@ def main(_):
                  center_square - square_size])
             pts2 = pts1 + random_state.uniform(-alpha_affine, alpha_affine, size=pts1.shape).astype(np.float32)
             M = cv2.getAffineTransform(pts1, pts2)
-            image = cv2.warpAffine(image, M, shape_size[::-1], borderMode=cv2.BORDER_REFLECT_101)
+            try:
+                image = cv2.warpAffine(image, M, shape_size[::-1], borderMode=cv2.BORDER_REFLECT_101)
+            except:
+                print('exception')
+                continue
 
             dx = gaussian_filter((random_state.rand(*shape) * 2 - 1), sigma) * alpha
             dy = gaussian_filter((random_state.rand(*shape) * 2 - 1), sigma) * alpha
@@ -74,7 +76,7 @@ def main(_):
             im_merge_t = map_coordinates(image, indices, order=1, mode='reflect').reshape(shape)
 
             randomString = str(uuid.uuid4()).replace("-", "")
-            new_id = FLAGS.aug_prefix + randomString + id_[39:]
+            new_id = id_[:10] + FLAGS.aug_prefix + randomString
             os.mkdir(FLAGS.train_dir + new_id)
             os.mkdir(FLAGS.train_dir + new_id + '/images/')
             im_t = im_merge_t[..., 0:3]
@@ -93,7 +95,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--train_dir',
-        default='../../../dl_data/nucleus/stage1_train_reform/',
+        default='../../../dl_data/nucleus/stage1_train_valid/',
         type=str,
         help="Train Data directory")
 
