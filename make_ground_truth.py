@@ -31,9 +31,17 @@ def get_contour(img):
     cv2.drawContours(img_contour, contours, -1, (255, 255, 255), 1)
     return img_contour
 
+def morpho_op(BW):
+    s = [[0,1,0],[1,1,1],[0,1,0]]#structuring element (diamond shaped)
+    m_morfo = ndi.binary_opening(BW,structure=s,iterations=1)
+    m_morfo = ndi.binary_closing(m_morfo,structure=s,iterations=1)
+    M_filled = ndi.binary_fill_holes(m_morfo,structure=s)
+    return M_filled
+
 def main(_):
 
     filelist = sorted(os.listdir(FLAGS.dataset_dir))
+    filecount = 1
     for data in filelist:
         image_path = os.path.join(FLAGS.dataset_dir, data, 'images', data + '.png')
         img_shape = read_image(image_path).shape
@@ -47,9 +55,9 @@ def main(_):
             _mask = imread(os.path.join(mask_path, mask_file))
             #
             # fill the holes that remained
-            _mask = ndi.binary_fill_holes(_mask).astype(int)
+            _mask = morpho_op(_mask)
             # Rescale to 0-255 and convert to uint8
-            _mask = (255.0 / _mask.max() * (_mask - _mask.min())).astype(np.uint8)
+            _mask = (255.0 * _mask).astype(np.uint8)
             #
             _mask = np.expand_dims(_mask, axis=-1)
             mask = np.maximum(mask, _mask)
@@ -64,7 +72,8 @@ def main(_):
         if not os.path.exists(gt_path):
             os.makedirs(gt_path)
 
-        print(data)
+        print(">> (%d / %d) %s" % (filecount, filelist.__len__(), data))
+        filecount += 1
 
         #imshow(np.squeeze(countour))
         #plt.show()
