@@ -46,8 +46,24 @@ from utils.oper_utils2 import read_test_data_properties, mask_to_rle, \
 from input_pred_data import Data
 from input_pred_data import DataLoader
 
+from PIL import Image
+import scipy.ndimage as ndi
+
 FLAGS = None
 
+def get_image_size(imageId):
+    image_path = os.path.join(FLAGS.data_dir, imageId, 'images')
+    image = os.listdir(image_path)
+    img = Image.open(os.path.join(image_path, image[0]))
+
+    return img.height, img.width
+
+def morpho_op(BW):
+    s = [[0,1,0],[1,1,1],[0,1,0]]#structuring element (diamond shaped)
+    m_morfo = ndi.binary_opening(BW,structure=s,iterations=1)
+    m_morfo = ndi.binary_closing(m_morfo,structure=s,iterations=1)
+    M_filled = ndi.binary_fill_holes(m_morfo,structure=s)
+    return M_filled
 
 def main(_):
     # specify GPU
@@ -112,80 +128,92 @@ def main(_):
 
 
     ##################################################
-    # start test & make csv file.
+    # prepare
     ##################################################
 
-    # Read basic properties of test images.
-    test_df = read_test_data_properties(FLAGS.data_dir, 'images')
+    # Create result_dir
+    if not os.path.exists(FLAGS.result_dir):
+        os.makedirs(FLAGS.result_dir)
 
-    test_pred_proba = []
-    test_pred_fnames = []
+    # Delete existed submission file
+    filename = os.path.join(FLAGS.result_dir, 'submission-nucleus_det_fill-' + global_step + '.csv')
+    if os.path.exists(filename):
+        os.remove(filename)
+
+
+    ##################################################
+    # start test & make csv file.
+    ##################################################
 
     start_time = datetime.datetime.now()
     print("start test: {}".format(start_time))
 
+    total_process_count = test_data.data_size
+    process_count = 0
+
     # Initialize iterator with the test dataset
     sess.run(test_init_op)
     for i in range(test_batches_per_epoch):
+
         batch_xs, fnames = sess.run(next_batch)
         prediction = sess.run(pred,
                               feed_dict={
                                   X: batch_xs,
                                   mode: False}
                               )
-        test_pred_proba.extend(prediction)
-        test_pred_fnames.extend(fnames)
+
+        # Transform propabilities into binary values 0 or 1.
+        test_pred = trsf_proba_to_binary(prediction)
+
+        for i in range(len(test_pred)):
+            imageId = fnames[i].decode()
+            height, width = get_image_size(imageId)
+
+            # Resize predicted masks to original image size.
+            res_mask = trsf_proba_to_binary(
+                resize(np.squeeze(test_pred[i]), (height, width), mode='constant', preserve_range=True)
+            )
+            #
+            # fill the holes that remained
+            res_mask = morpho_op(res_mask)
+            # Rescale to 0-255 and convert to uint8
+            res_mask = (255.0 * res_mask).astype(np.uint8)
+            #
+            test_pred_to_original_size = np.array(res_mask)
+
+            # Run length encoding of predicted test masks.
+            test_pred_rle = []
+            test_pred_ids = []
+
+            # calculate the minimum object size
+            min_object_size = 20 * height * width / (256 * 256)
+
+            # rle
+            rle = list(mask_to_rle(test_pred_to_original_size, min_object_size=min_object_size))
+            test_pred_rle.extend(rle)
+            test_pred_ids.extend([imageId] * len(rle))
+
+            sub = pd.DataFrame()
+            sub['ImageId'] = test_pred_ids
+            sub['EncodedPixels'] = pd.Series(test_pred_rle).apply(lambda x: ' '.join(str(y) for y in x))
+
+            if not os.path.isfile(filename):
+                sub.to_csv(filename, index=False)
+            else:
+                sub.to_csv(filename, index=False, header=False, mode='a')
+
+            process_count += 1
+            print('evaluation... %d / %d' % (process_count, total_process_count))
+
+    # add bulk data for invalid image
+    sub = pd.DataFrame()
+    sub['ImageId'] = ['5390acefd575cf9b33413ddf6cbb9ce137ae07dc04616ba24c7b5fe476c827d2']
+    sub['EncodedPixels'] = pd.Series([[1, 1]]).apply(lambda x: ' '.join(str(y) for y in x))
+    sub.to_csv(filename, index=False, header=False, mode='a')
 
     end_time = datetime.datetime.now()
     print('end test: {}'.format(test_data.data_size, end_time))
     print('test waste time: {}'.format(end_time - start_time))
-
-    # Transform propabilities into binary values 0 or 1.
-    test_pred = trsf_proba_to_binary(test_pred_proba)
-
-
-    # Resize predicted masks to original image size.
-    test_pred_to_original_size = []
-    for i in range(len(test_pred)):
-        res_mask = trsf_proba_to_binary(
-            resize(np.squeeze(test_pred[i]),
-                   (test_df.loc[i, 'img_height'], test_df.loc[i, 'img_width']),
-                   mode='constant',preserve_range=True)
-        )
-        test_pred_to_original_size.append(res_mask)
-
-    test_pred_to_original_size = np.array(test_pred_to_original_size)
-
-
-    # # Inspect a test prediction and check run length encoding.
-    # for n, id_ in enumerate(test_df['img_id']):
-    #     fname = test_pred_fnames[n]
-    #     mask = test_pred_to_original_size[n]
-    #     rle = list(mask_to_rle(mask))
-    #     mask_rec = rle_to_mask(rle, mask.shape)
-    #     print('no:{}, {} -> Run length encoding: {} matches, {} misses'.format(
-    #         n, fname, (mask_rec == mask).sum(), (mask_rec != mask).sum()))
-
-
-    # Create submission DataFrame
-    if not os.path.exists(FLAGS.result_dir):
-        os.makedirs(FLAGS.result_dir)
-
-    # Run length encoding of predicted test masks.
-
-    for n, _id in enumerate(test_df['img_id']):
-        test_pred_rle = []
-        test_pred_ids = []
-        min_object_size = 20 * test_df.loc[n, 'img_height'] * test_df.loc[n, 'img_width'] / (256 * 256)
-        rle = list(mask_to_rle(test_pred_to_original_size[n], min_object_size=min_object_size))
-        test_pred_rle.extend(rle)
-        test_pred_ids.extend([_id] * len(rle))
-        sub = pd.DataFrame()
-        sub['ImageId'] = test_pred_ids
-        sub['EncodedPixels'] = pd.Series(test_pred_rle).apply(lambda x: ' '.join(str(y) for y in x))
-        sub.to_csv(os.path.join(FLAGS.result_dir, _id + '.csv'),
-                   index=False)
-        sub.head()
 
 
 if __name__ == '__main__':
@@ -193,20 +221,21 @@ if __name__ == '__main__':
     parser.add_argument(
         '--data_dir',
         # default='/home/ace19/dl-data/nucleus_detection/stage1_train',
-        default='../../dl_data/nucleus/stage1_test',
+        # default='../../dl_data/nucleus/stage1_test',
+        default='../../dl_data/nucleus/stage2_test_final',
         type=str,
         help="Data directory")
 
     parser.add_argument(
         '--batch_size',
-        default=24,
+        default=4,
         type=int,
         help="Batch size")
 
     parser.add_argument(
         '--checkpoint_dir',
         type=str,
-        default=os.getcwd() + '/models',
+        default=os.getcwd() + '/models_2',
         help='Directory to read checkpoint.')
 
     parser.add_argument(
@@ -219,13 +248,14 @@ if __name__ == '__main__':
     parser.add_argument(
         '--result_dir',
         type=str,
-        default=os.getcwd() + '/result_each_csv',
+        default=os.getcwd() + '/result_2',
         help='Directory to write submission.csv file.')
 
     parser.add_argument(
         '--img_size',
         type=int,
-        default=256,
+        default=512,
+        # default=256,
         help="Image height and width")
 
     parser.add_argument(
@@ -238,8 +268,8 @@ if __name__ == '__main__':
     parser.add_argument(
         '--use_64_channel',
         type=bool,
-        # default=True,
-        default=False,
+        default=True,
+        # default=False,
         help="If you set True then use the Unet_64_1024. otherwise use the Unet_32_512")
 
     parser.add_argument(
