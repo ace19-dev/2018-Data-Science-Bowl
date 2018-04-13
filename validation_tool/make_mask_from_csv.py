@@ -17,11 +17,19 @@ import matplotlib.cm as cm  # Color map
 
 
 def get_image_size(imageId):
-    image_path = os.path.join(FLAGS.dataset_dir, imageId, 'images')
-    image = os.listdir(image_path)
-    img = Image.open(os.path.join(image_path, image[0]))
+    height = 0
+    width = 0
 
-    return img.height, img.width
+    try:
+        image_path = os.path.join(FLAGS.dataset_dir, imageId, 'images')
+        image = os.listdir(image_path)
+        img = Image.open(os.path.join(image_path, image[0]))
+        height = img.height
+        width = img.width
+    except:
+        print("get_image_size exception")
+
+    return height, width
 
 def remove_eval_dir(imageId, target_path):
     dir_path = os.path.join(FLAGS.dataset_dir, imageId, target_path)
@@ -76,11 +84,14 @@ def main(_):
             per_image_index = 0
             remove_eval_dir(imageId, FLAGS.mask_dir)
             remove_eval_dir(imageId, FLAGS.gt_mask_dir)
+            image = np.zeros(0)
         else:
             imageIdChanged = False
 
         height, width = get_image_size(imageId)
         #print(imageId, " >>>>> ", width, height)
+        if height == 0 or width == 0:
+            continue
 
         mask_info = data_frame['EncodedPixels'][index]
         mask_array = np.fromstring(mask_info, sep=" ", dtype=np.uint32)
@@ -123,14 +134,16 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--labels_path',
-        default='../result/submission-nucleus_det-100.csv',
+        default='../result_2/submission-nucleus_det_stage2-100.csv',
         # default='../../../dl_data/nucleus/stage1_train_labels/stage1_train_labels.csv',
+        # default='../../../dl_data/nucleus/stage1_solution/stage1_solution.csv',
         type=str,
         help="Data directory")
 
     parser.add_argument(
         '--dataset_dir',
-        default='../../../dl_data/nucleus/stage1_test',
+        # default='../../../dl_data/nucleus/stage1_test',
+        default='../../../dl_data/nucleus/stage2_test_final',
         # default='../../../dl_data/nucleus/stage1_train',
         type=str,
         help="Labels directory")
@@ -138,12 +151,14 @@ if __name__ == '__main__':
     parser.add_argument(
         '--mask_dir',
         default='eval_mask',
+        # default='solution_eval_mask',
         type=str,
         help="mask directory name")
 
     parser.add_argument(
         '--gt_mask_dir',
         default='eval_gt_mask',
+        # default='solution_eval_gt_mask',
         type=str,
         help="gt_mask directory name")
 
