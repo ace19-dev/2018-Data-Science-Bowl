@@ -96,15 +96,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--train_dir',
-        default='../../../dl_data/nucleus/stage1_train',
+        default='../../../dl_data/nucleus/stage1_train_refined',
         type=str,
         help="Train Data directory")
-
-    parser.add_argument(
-        '--img_size',
-        type=int,
-        default=256,
-        help="Image height and width")
 
     parser.add_argument(
         '--aug_prefix',
