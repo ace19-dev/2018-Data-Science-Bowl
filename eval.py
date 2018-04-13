@@ -162,9 +162,10 @@ def main(_):
         )
         #
         # fill the holes that remained
-        res_mask = morpho_op(res_mask)
+        res_mask_f = morpho_op(res_mask)
         # Rescale to 0-255 and convert to uint8
-        res_mask = (255.0 * res_mask).astype(np.uint8)
+        res_mask_f = (255.0 * res_mask_f).astype(np.uint8)
+        res_mask |= res_mask_f
         #
         test_pred_to_original_size.append(res_mask)
 

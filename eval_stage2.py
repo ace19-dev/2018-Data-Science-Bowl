@@ -175,9 +175,10 @@ def main(_):
             )
             #
             # fill the holes that remained
-            res_mask = morpho_op(res_mask)
+            res_mask_f = morpho_op(res_mask)
             # Rescale to 0-255 and convert to uint8
-            res_mask = (255.0 * res_mask).astype(np.uint8)
+            res_mask_f = (255.0 * res_mask_f).astype(np.uint8)
+            res_mask |= res_mask_f
             #
             test_pred_to_original_size = np.array(res_mask)
 
@@ -186,7 +187,7 @@ def main(_):
             test_pred_ids = []
 
             # calculate the minimum object size
-            min_object_size = 20 * height * width / (256 * 256)
+            min_object_size = 20 * height * width / (FLAGS.img_size * FLAGS.img_size)
 
             # rle
             rle = list(mask_to_rle(test_pred_to_original_size, min_object_size=min_object_size))
