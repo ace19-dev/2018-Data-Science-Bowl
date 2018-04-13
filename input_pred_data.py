@@ -97,6 +97,9 @@ class DataLoader(object):
             image_paths[idx] = image_path['image']
             image_names[idx] = os.path.basename(image_path['image'])[:-4]
 
+        image_paths.sort()
+        image_names.sort()
+
         # convert lists to TF tensor
         image_paths = convert_to_tensor(image_paths, dtype=dtypes.string)
         image_names = convert_to_tensor(image_names, dtype=dtypes.string)
