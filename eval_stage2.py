@@ -136,7 +136,7 @@ def main(_):
         os.makedirs(FLAGS.result_dir)
 
     # Delete existed submission file
-    filename = os.path.join(FLAGS.result_dir, 'submission-nucleus_det_fill-' + global_step + '.csv')
+    filename = os.path.join(FLAGS.result_dir, 'submission-nucleus_det_stage2-' + global_step + '.csv')
     if os.path.exists(filename):
         os.remove(filename)
 
@@ -235,7 +235,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--checkpoint_dir',
         type=str,
-        default=os.getcwd() + '/models_2',
+        default=os.getcwd() + '/models',
         help='Directory to read checkpoint.')
 
     parser.add_argument(
@@ -248,7 +248,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--result_dir',
         type=str,
-        default=os.getcwd() + '/result_2',
+        default=os.getcwd() + '/result',
         help='Directory to write submission.csv file.')
 
     parser.add_argument(
