@@ -46,8 +46,16 @@ from utils.oper_utils2 import read_test_data_properties, mask_to_rle, \
 from input_pred_data import Data
 from input_pred_data import DataLoader
 
+import scipy.ndimage as ndi
+
 FLAGS = None
 
+def morpho_op(BW):
+    s = [[0,1,0],[1,1,1],[0,1,0]]#structuring element (diamond shaped)
+    m_morfo = ndi.binary_opening(BW,structure=s,iterations=1)
+    m_morfo = ndi.binary_closing(m_morfo,structure=s,iterations=1)
+    M_filled = ndi.binary_fill_holes(m_morfo,structure=s)
+    return M_filled
 
 def main(_):
     # specify GPU
@@ -152,6 +160,12 @@ def main(_):
                    (test_df.loc[i, 'img_height'], test_df.loc[i, 'img_width']),
                    mode='constant',preserve_range=True)
         )
+        #
+        # fill the holes that remained
+        res_mask = morpho_op(res_mask)
+        # Rescale to 0-255 and convert to uint8
+        res_mask = (255.0 * res_mask).astype(np.uint8)
+        #
         test_pred_to_original_size.append(res_mask)
 
     test_pred_to_original_size = np.array(test_pred_to_original_size)
