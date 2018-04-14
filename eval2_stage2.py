@@ -202,6 +202,7 @@ def trsf_proba_to_binary(y_data):
     """Transform propabilities into binary values 0 or 1."""
     return np.greater(y_data, .0001).astype(np.uint8)
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
