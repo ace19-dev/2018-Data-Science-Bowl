@@ -9,13 +9,13 @@ import matplotlib.patches as patches
 # from subprocess import check_output
 # print(check_output(["ls", "../input"]).decode("utf8"))
 
-STAGE1_TEST = "/home/hong/dl_data/nuclei_dataset/stage1_test"
+STAGE1_TEST = "../../dl_data/nucleus/stage1_test"
 STAGE1_TEST_IMAGE_PATTERN = "%s/{}/images/{}.png" % STAGE1_TEST
 SUBMISSION_IMAGEID = "ImageId"
 SUBMISSION_ENCODED = "EncodedPixels"
 models_path = [
-    "/home/hong/dl_data/nuclei_dataset/sub-dsbowl2018-1111.csv",
-    "/home/hong/dl_data/nuclei_dataset/sub-dsbowl2018-2222.csv"
+    "../../dl_data/nucleus/sub-dsbowl2018-1111.csv",
+    "../../dl_data/nucleus/sub-dsbowl2018-2222.csv"
 ]
 
 # Image loading
