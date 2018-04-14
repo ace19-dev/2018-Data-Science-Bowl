@@ -111,12 +111,15 @@ def _upconv_2D(tensor, n_filter, flags, name):
         output (4-D Tensor): (N, 2 * H, 2 * W, C)
     """
 
+    N = tensor.shape[1] * tensor.shape[2] * tensor.shape[3]
+    stddev = np.sqrt(2 / N.value)
     return tf.layers.conv2d_transpose(
         tensor,
         filters=n_filter,
         kernel_size=2,
         strides=2,
         kernel_regularizer=tf.contrib.layers.l2_regularizer(L2_REG),
+        # kernel_initializer=tf.truncated_normal_initializer(stddev=stddev, dtype=tf.float32),
         name="upsample_{}".format(name))
 
 
