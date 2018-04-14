@@ -219,6 +219,7 @@ ax[0].axis('off')
 ax[0].set_ylim(test_image.shape[0] + 10, -10)
 ax[0].set_xlim(-10, test_image.shape[1] + 10)
 cmap = plt.cm.get_cmap('nipy_spectral')
+
 # Plot boxes per model
 for box in np.concatenate(test_masks_boxes_cv_array).squeeze():
     p = patches.Rectangle((box[0]-1, box[1]-1), box[2], box[3], linewidth=1, facecolor='none', edgecolor=cmap(box[4]*60), alpha=0.75, linestyle="dashed")
