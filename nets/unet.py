@@ -13,7 +13,7 @@ def _conv_conv_pool(input_,
                    flags,
                    name,
                    pool=True,
-                   activation=tf.nn.relu):
+                   activation=tf.nn.elu):
     """{Conv -> BN -> RELU}x2 -> {Pool, optional}
 
     Args:
@@ -47,7 +47,7 @@ def _conv_conv_pool(input_,
                 name="conv_{}".format(i + 1))
             net = tf.layers.batch_normalization(
                 net, training=training, name="bn_{}".format(i + 1))
-            net = activation(net, name="relu{}_{}".format(name, i + 1))
+            net = activation(net, name="elu{}_{}".format(name, i + 1))
 
         if pool is False:
             return net
