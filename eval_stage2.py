@@ -230,7 +230,7 @@ if __name__ == '__main__':
         '--data_dir',
         # default='/home/ace19/dl-data/nucleus_detection/stage1_train',
         # default='../../dl_data/nucleus/stage1_test',
-        default='../../dl_data/nucleus/stage2_test_final_temp',
+        default='../../dl_data/nucleus/stage2_test_final',
         type=str,
         help="Data directory")
 
@@ -243,7 +243,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--checkpoint_dir',
         type=str,
-        default=os.getcwd() + '/models/4',
+        default=os.getcwd() + '/models',
         help='Directory to read checkpoint.')
 
     parser.add_argument(
