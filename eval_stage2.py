@@ -194,9 +194,16 @@ def main(_):
             min_object_size = 20 * height * width / (FLAGS.img_size * FLAGS.img_size)
 
             # rle
-            rle = list(mask_to_rle(test_pred_to_original_size, min_object_size=min_object_size))
-            test_pred_rle.extend(rle)
-            test_pred_ids.extend([imageId] * len(rle))
+            rle = list(mask_to_rle(test_pred_to_original_size))
+
+            if(len(rle) == 0):
+                print('Number of predicted masks is ', len(rle))
+                test_pred_rle.extend([[1, 1]])
+                test_pred_ids.extend([imageId] * 1)
+
+            else:
+                test_pred_rle.extend(rle)
+                test_pred_ids.extend([imageId] * len(rle))
 
             sub = pd.DataFrame()
             sub['ImageId'] = test_pred_ids
