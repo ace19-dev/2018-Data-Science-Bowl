@@ -89,8 +89,12 @@ def main(_):
 
     sess.run(tf.global_variables_initializer())
 
+
+    ##################################################
     # Restore variables from training checkpoints.
+    ##################################################
     saver = tf.train.Saver()
+
     checkpoint_path = None
     if FLAGS.checkpoint_dir and FLAGS.checkpoint_file:
         checkpoint_path = FLAGS.checkpoint_dir+'/'+FLAGS.checkpoint_file
@@ -136,7 +140,7 @@ def main(_):
         os.makedirs(FLAGS.result_dir)
 
     # Delete existed submission file
-    filename = os.path.join(FLAGS.result_dir, 'submission-nucleus_det_stage2-' + global_step + '.csv')
+    filename = os.path.join(FLAGS.result_dir, 'submission-nucleus_stage2-' + global_step + '.csv')
     if os.path.exists(filename):
         os.remove(filename)
 
