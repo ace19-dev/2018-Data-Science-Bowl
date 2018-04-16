@@ -210,7 +210,7 @@ def main(_):
                                     mode: True}
                          )
 
-            train_summary_writer.add_summary(train_summary, (start_epoch-epoch)*tr_batches_per_epoch+step)
+            train_summary_writer.add_summary(train_summary, (epoch-start_epoch)*tr_batches_per_epoch+step)
             tf.logging.info('epoch #%d, step #%d/%d, accuracy(iou) %.5f%%' %
                             (epoch, step, tr_batches_per_epoch, accuracy))
 
@@ -231,7 +231,7 @@ def main(_):
             total_val_accuracy += val_accuracy
             val_count += 1
 
-            val_summary_writer.add_summary(val_summary, (start_epoch-epoch)*val_batches_per_epoch+n)
+            val_summary_writer.add_summary(val_summary, (epoch-start_epoch)*val_batches_per_epoch+n)
             tf.logging.info('step #%d/%d, accuracy(iou) %.5f%%' %
                             (n, val_batches_per_epoch, val_accuracy * 100))
 
@@ -254,7 +254,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--data_dir',
-        default='../../dl_data/nucleus/stage1_train_valid_elas',
+        # default='../../dl_data/nucleus/stage1_train_valid_elas',
+        default='../../dl_data/nucleus/stage1_train',
         type=str,
         help="Data directory")
 
