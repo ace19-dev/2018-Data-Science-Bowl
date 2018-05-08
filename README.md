@@ -49,7 +49,7 @@ gain access to unique data sets to develop algorithms that address a specific ch
 - https://www.kaggle.com/c/data-science-bowl-2018/discussion/54741 - 1st place solution
 - [Generic U-Net Tensorflow implementation for image segmentation](https://github.com/jakeret/tf_unet)
 - [A concise code for training and evaluating Unet using tensorflow+keras](https://github.com/zizhaozhang/unet-tensorflow-keras)
-- [Implementation of Segnet, FCN, UNet and other models in Keras](https://github.com/divamgupta/image-segmentation-keras) -
+- [Implementation of Segnet, FCN, UNet and other models in Keras](https://github.com/divamgupta/image-segmentation-keras)
 - [Dilated U-net](https://chuckyee.github.io/cardiac-segmentation/)
 - https://github.com/preritj/segmentation
 
