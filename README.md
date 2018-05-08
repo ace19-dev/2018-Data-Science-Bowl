@@ -74,5 +74,5 @@ gain access to unique data sets to develop algorithms that address a specific ch
 
 ## Notice
 - You can freely take this source and modify it for use. However, I also use the data I obtained from several places, so please check the original copyright issue.
-- The source contains bugs.
+- The above resources may contain bugs.
 - Thank you for your interest.
