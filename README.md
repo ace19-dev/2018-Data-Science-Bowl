@@ -65,6 +65,6 @@ gain access to unique data sets to develop algorithms that address a specific ch
   
 
 ## Notice
-- I use the materials from several places then I edited sources.
+- I used the materials from several places then I edited sources.
 - The above resources may contain bugs.
 - Thank you for your interest and update will be happened occasionally.
