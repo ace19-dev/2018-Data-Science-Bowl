@@ -62,15 +62,7 @@ gain access to unique data sets to develop algorithms that address a specific ch
   - python train.py
 - To eval
   - python eval.py
-
-
-
-## Idea
-- check image and label file
-- Augumentation (by using elastice depormation -> flip, bright etc.) (ing)
-- using ensemble (hong) / 
-- modify hyper-parameter
-- Change network to Dilated U-net (sungil)
+  
 
 ## Notice
 - I use the materials from several places then I edited sources.
