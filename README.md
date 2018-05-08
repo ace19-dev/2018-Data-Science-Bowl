@@ -72,3 +72,7 @@ gain access to unique data sets to develop algorithms that address a specific ch
 - modify hyper-parameter
 - Change network to Dilated U-net (sungil)
 
+## Notice
+- You can freely take this source and modify it for use.
+- The source contains bugs.
+- Thank you for your interest.
