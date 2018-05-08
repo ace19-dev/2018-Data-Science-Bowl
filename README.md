@@ -73,6 +73,6 @@ gain access to unique data sets to develop algorithms that address a specific ch
 - Change network to Dilated U-net (sungil)
 
 ## Notice
-- You can freely take this source and modify it for use.
+- You can freely take this source and modify it for use. However, I also use the data I obtained from several places, so please check the original copyright issue.
 - The source contains bugs.
 - Thank you for your interest.
