@@ -18,12 +18,12 @@ FLAGS = None
 RANDOM_SEED = 54989
 
 
-def read_train_data_properties(train_dir):
+def read_train_data_properties(source_dir):
     """Read basic properties of training images and masks"""
     tmp = []
-    for i, dir_name in enumerate(next(os.walk(train_dir))[1]):
-        img_dir = os.path.join(train_dir, dir_name, 'images')
-        mask_dir = os.path.join(train_dir, dir_name, 'gt_mask')
+    for i, dir_name in enumerate(next(os.walk(source_dir))[1]):
+        img_dir = os.path.join(source_dir, dir_name, 'images')
+        mask_dir = os.path.join(source_dir, dir_name, 'gt_mask')
         img_name = next(os.walk(img_dir))[2][0]
         mask_name = next(os.walk(mask_dir))[2][0]
         img_name_id = os.path.splitext(img_name)[0]
@@ -76,14 +76,14 @@ def main(_):
                                  horizontal_flip=True,
                                  vertical_flip=True)
 
-    train_info = read_train_data_properties(FLAGS.train_dir)
+    train_info = read_train_data_properties(FLAGS.source_dir)
 
     # image_augmentation
     for i, filename in tqdm.tqdm(enumerate(train_info['image_path']), total=len(train_info)):
         _name = os.path.basename(filename)
         for n in range(FLAGS.aug_count):
             seed = np.random.randint(RANDOM_SEED)
-            data_path = os.path.join(FLAGS.train_dir, make_aug_dir(_name[:10]))
+            data_path = os.path.join(FLAGS.target_dir, make_aug_dir(_name[:10]))
 
             target_img_dir = os.path.join(data_path, 'images')
             target_mask_dir = os.path.join(data_path, 'gt_mask')
@@ -95,14 +95,20 @@ def main(_):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--train_dir',
-        default='../../../dl_data/nucleus/stage1_train_refined',
+        '--source_dir',
+        default='../../../dl_data/nucleus/stage1_train_elastic',
+        type=str,
+        help="Train Data directory")
+
+    parser.add_argument(
+        '--target_dir',
+        default='../../../dl_data/nucleus/stage1_train_aug',
         type=str,
         help="Train Data directory")
 
     parser.add_argument(
         '--aug_prefix',
-        default='_aug_',
+        default='aug_',
         type=str,
         help="prefix name of augmentation")
 
