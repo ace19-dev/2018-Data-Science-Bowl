@@ -55,6 +55,7 @@ gain access to unique data sets to develop algorithms that address a specific ch
 
 
 ## Quick Start
+- Download dataset from [Here](https://www.kaggle.com/c/data-science-bowl-2018/data)
 - Make the mask file into one file. -> python make_ground_truth.py
 - Augment1 -> python aug/elastic_tran.py for Elastic Transform
 - Augment2 -> python aug/augment.py
