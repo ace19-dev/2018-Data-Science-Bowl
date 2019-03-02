@@ -63,8 +63,6 @@ gain access to unique data sets to develop algorithms that address a specific ch
   
 
 ## Notice
-- This repo result cause not a good. nevertheless might basic start point.
+- This repository cause not a good result. nevertheless might be basic start point.
 - You should look closely at the data for better results.
-- I used the references from several places then I edited sources.
-- The above resources may contain bugs.
-- Thank you for your interest and update will be happened occasionally.
+- I used the materials from several references.
