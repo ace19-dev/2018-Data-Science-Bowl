@@ -105,12 +105,6 @@ venv.bak/
 
 *.pyc
 models/
-_temp/
-pre-trained/
-result/
-
-*.pyc
-models/
 result/
 _dataset/
 temp/
