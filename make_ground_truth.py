@@ -28,7 +28,7 @@ def get_contour(img):
     # '''
     img_contour = np.zeros_like(img).astype(np.uint8)
     # http://opencv-python.readthedocs.io/en/latest/doc/15.imageContours/imageContours.html
-    _, contours, hierarchy = cv2.findContours(img.astype(np.uint8), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+    contours, hierarchy = cv2.findContours(img.astype(np.uint8), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
     cv2.drawContours(img_contour, contours, -1, (255, 255, 255), 1)
     return img_contour
     # '''
@@ -123,13 +123,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--dataset_dir',
-        default='../../dl_data/nucleus/stage1_train_valid_elas',
+        default='../../dl_data/nucleus/stage1_train',
         type=str,
         help="Data directory")
 
     parser.add_argument(
         '--ground_truth_dir',
-        default='../../dl_data/nucleus/stage1_train_valid_elas',
+        default='../../dl_data/nucleus/stage1_train',
         type=str,
         help="ground_truth data directory")
 
