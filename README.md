@@ -55,16 +55,16 @@ gain access to unique data sets to develop algorithms that address a specific ch
 
 
 ## Quick Start
-- Firstly, you can make ground truth mask and other script.
-  - python make_ground_truth.py
-  - python aug/augment.py
-- Second
-  - python train.py
-- To eval
-  - python eval.py
+- Make the mask file into one file. -> python make_ground_truth.py
+- Augment1 -> python aug/elastic_tran.py for Elastic Transform
+- Augment2 -> python aug/augment.py
+- python train.py
+- python eval.py for evaluation
   
 
 ## Notice
-- I used the materials from several places then I edited sources.
+- This repo result cause not a good. nevertheless might basic start point.
+- You should look closely at the data for better results.
+- I used the references from several places then I edited sources.
 - The above resources may contain bugs.
 - Thank you for your interest and update will be happened occasionally.
