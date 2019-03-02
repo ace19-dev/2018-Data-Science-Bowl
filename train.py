@@ -255,7 +255,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--data_dir',
         # default='../../dl_data/nucleus/stage1_train_valid_elas',
-        default='../../dl_data/nucleus/stage1_train',
+        default='../../dl_data/nucleus/stage1_train_aug',
         type=str,
         help="Data directory")
 
@@ -305,7 +305,7 @@ if __name__ == '__main__':
 
     parser.add_argument(
         '--batch_size',
-        default=4,
+        default=2,
         type=int,
         help="Batch size")
 
