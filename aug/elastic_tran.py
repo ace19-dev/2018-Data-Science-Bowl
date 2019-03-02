@@ -15,14 +15,16 @@ from tqdm import tqdm
 FLAGS = None
 
 def main(_):
-    train_ids = next(os.walk(FLAGS.train_dir))[1]
+    train_ids = next(os.walk(FLAGS.source_dir))[1]
 
     print('Getting and resizing train images and masks ... ')
     sys.stdout.flush()
 
+    os.mkdir(FLAGS.target_dir)
+
     for n, id_ in tqdm(enumerate(train_ids), total=len(train_ids)):
         for aug_count in range (0, FLAGS.aug_count):
-            path = FLAGS.train_dir + id_
+            path = FLAGS.source_dir + id_
             image_ = cv2.imread(path + '/images/' + id_ + '.png')
             # image_ = cv2.cvtColor(image_, cv2.COLOR_RGBA2GRAY)
             # imshow(image_)
@@ -71,31 +73,37 @@ def main(_):
             randomString = str(uuid.uuid4()).replace("-", "")
 
             new_id = FLAGS.aug_prefix + randomString + id_[39:]
-            os.mkdir(FLAGS.train_dir + new_id)
-            os.mkdir(FLAGS.train_dir + new_id + '/images/')
-            os.mkdir(FLAGS.train_dir + new_id + '/gt_mask/')
-            cv2.imwrite(FLAGS.train_dir + new_id + '/images/' + new_id + '.png', im_t)
-            cv2.imwrite(FLAGS.train_dir + new_id + '/gt_mask/' + new_id + '.png', mask_t)
+            os.mkdir(FLAGS.target_dir + new_id)
+            os.mkdir(FLAGS.target_dir + new_id + '/images/')
+            os.mkdir(FLAGS.target_dir + new_id + '/gt_mask/')
+            cv2.imwrite(FLAGS.target_dir + new_id + '/images/' + new_id + '.png', im_t)
+            cv2.imwrite(FLAGS.target_dir + new_id + '/gt_mask/' + new_id + '.png', mask_t)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--train_dir',
+        '--source_dir',
         default='../../../dl_data/nucleus/stage1_train/',
         type=str,
         help="Train Data directory")
 
     parser.add_argument(
+        '--target_dir',
+        default='../../../dl_data/nucleus/stage1_train_elastic/',
+        type=str,
+        help="Train Data directory")
+
+    parser.add_argument(
         '--aug_prefix',
-        default='_elastic_',
+        default='elastic_',
         type=str,
         help="prefix name of augmentation")
 
     parser.add_argument(
         '--aug_count',
         type=int,
-        default=3,
+        default=2,
         help="Count of augmentation")
 
     FLAGS, unparsed = parser.parse_known_args()

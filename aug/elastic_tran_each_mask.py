@@ -108,7 +108,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--aug_count',
         type=int,
-        default=3,
+        default=2,
         help="Count of augmentation")
 
     FLAGS, unparsed = parser.parse_known_args()
