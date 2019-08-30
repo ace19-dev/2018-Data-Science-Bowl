@@ -47,6 +47,7 @@ gain access to unique data sets to develop algorithms that address a specific ch
 
 ## Reference
 - https://www.kaggle.com/c/data-science-bowl-2018/discussion/54741 - 1st place solution
+- https://github.com/selimsef/dsb2018_topcoders/ - DSB2018 [ods.ai] topcoders 1st place solution
 - [Generic U-Net Tensorflow implementation for image segmentation](https://github.com/jakeret/tf_unet)
 - [A concise code for training and evaluating Unet using tensorflow+keras](https://github.com/zizhaozhang/unet-tensorflow-keras)
 - [Implementation of Segnet, FCN, UNet and other models in Keras](https://github.com/divamgupta/image-segmentation-keras)
